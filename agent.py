@@ -11,14 +11,15 @@ class Agent(object):
         """
         self.iteration_counter = 0
         # Variables related to random exploration
-        self.random_straight_range = 10
-        self.random_turn_range = 10
+        self.random_straight_range = 20
+        self.random_turn_range = 20
         self.random_straight = random.randint(1, self.random_straight_range)
         self.random_turn = random.randint(1, self.random_turn_range)
         self.random_action = 0
         self.random_movement_counter = 0
-        self.vision = Conv_Autoencoder()
-
+        # self.vision = Conv_Autoencoder()
+        self.video_frames = []
+        self.video_dump_count = 0
 
     def reset(self, t=250):
         """
@@ -45,8 +46,14 @@ class Agent(object):
 
         self.iteration_counter += 1
         self.random_movement_counter += 1
-        action = self.random_exploration()
-        return action
+        self.video_frames.append(obs)
+        if len(self.video_frames) == 10000:
+            video_data = np.concatenate(self.video_frames)
+            np.save("video_data/normed_video_frames_"+str(self.video_dump_count), video_data)
+            self.video_dump_count+=1
+            self.video_frames = []
+
+        return
 
     def random_exploration(self):
         """Generate a series of straight moves followed by a series of turning moves in a random direction"""
@@ -54,9 +61,9 @@ class Agent(object):
         if self.random_movement_counter > self.random_turn + self.random_straight:
             # reset variables
             self.random_movement_counter = 0
-            self.random_action = random.randint(0, 1)
-            self.random_straight = random.randint(1, self.random_straight_range)
-            self.random_turn = random.randint(1, self.random_turn_range)
+            self.random_action = random.randint(0, 2)
+            self.random_straight = random.randint(1, self.random_straight_range+1)
+            self.random_turn = random.randint(1, self.random_turn_range+1)
 
         # take a series of straight movements
         if self.random_movement_counter <= self.random_straight:

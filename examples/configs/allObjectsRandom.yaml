@@ -1,7 +1,7 @@
 !ArenaConfig
 arenas:
   0: !Arena
-    t: 0
+    t: 1000
     items:
     - !Item
       name: CylinderTunnel
@@ -38,7 +38,7 @@ arenas:
     - !Item
       name: HotZone
   1: !Arena
-    t: 0
+    t: 1000
     items:
     - !Item
       name: CylinderTunnel
@@ -75,7 +75,7 @@ arenas:
     - !Item
       name: HotZone
   2: !Arena
-    t: 0
+    t: 1000
     items:
     - !Item
       name: CylinderTunnel
@@ -112,7 +112,7 @@ arenas:
     - !Item
       name: HotZone
   3: !Arena
-    t: 0
+    t: 1000
     items:
     - !Item
       name: CylinderTunnel
