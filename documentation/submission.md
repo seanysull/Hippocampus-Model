@@ -16,7 +16,9 @@ experiments we will run, therefore we provide the agent with the length of the e
 are the ones returned by the Gym environment `AnimalAIEnv` from `animalai.envs.environment`. If you wish to directly 
 work on the ML Agents `BrainInfo` you can access them via `info['brain_info']`
 
-Make sure any data loaded in the docker is referred to using **absolute paths** in the container or the form `/aaio/data/...` (see below). An example that you can modify is provided [here](https://github.com/beyretb/AnimalAI-Olympics/blob/master/examples/submission/agent.py)
+~~**NEW (v1.0.4)**: you can now select the resolution of the observation your agent takes as input, this argument will be passed to the environment directly (must be between 4 and 256)~~ (this option was removed, for evaluation inputs are 84x84, [see discussion](https://github.com/beyretb/AnimalAI-Olympics/issues/61#issuecomment-521933419))
+
+Make sure any data loaded in the docker image is referred to using **absolute paths** in the container or the form `/aaio/data/...` (see below). An example that you can modify is provided [here](https://github.com/beyretb/AnimalAI-Olympics/blob/master/examples/submission/agent.py)
 
 ## Create an EvalAI account and add submission details
 
@@ -48,7 +50,7 @@ If your submission only requires the `animalai-train` library to run, you can us
 docker build --tag=submission .
 ```
 
-You can give your docker the name you want, it does not have to be `submission`. Note that the Dockerfile creates two 
+You can give your docker image the name you want, it does not have to be `submission`. Note that the Dockerfile creates two 
 folders `/aaio` and `/aaio/data` at the root of the image, and copies the `agent.py` file and `data` folder from your local machine into the image. Your submission must keep this architecture. References to these folders in 
 your code **should use absolute paths** (see the example agent provided in `examples/submission`).
 
@@ -58,7 +60,7 @@ As uploading and evaluating images takes a while, and you are only allowed a max
 
 Bottom line: be sure to test your submission prior to uploading!
 
-First, copy the AnimalAI linux environment (and AnimalAI_Data folder) to `examples/submission/test_submission/env`. 
+First, copy the AnimalAI **linux** environment (and AnimalAI_Data folder) to `examples/submission/test_submission/env`. 
 
 Next, you need to  run the image by mounting the `test_submission` folder and its content as a volume, and execute the `testDocker.py` script. To do so, from the `submission` folder, run:
 
@@ -74,7 +76,7 @@ You can now submit your image to EvalAI for evaluation as explained on the [Eval
 
 **Note**: the phase name to use when pushing is: `animalai-main-396`. To push your image use `evalai push <image>:<tag> --phase animalai-main-396` (details are at the bottom of the EvalAI page linked above).
 
-## Docker evaluation and results
+## Docker image evaluation and results
 
 On the EvalAI page you will see that the number of valid submissions is limited to one a day. A submission is valid if it fulfils the following requirements:
 

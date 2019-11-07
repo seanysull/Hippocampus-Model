@@ -26,6 +26,15 @@ def main():
         print('Your agent could not be reset:')
         raise e
 
+    try:
+        resolution = submitted_agent.resolution
+        assert resolution == 84
+    except AttributeError:
+        resolution = 84
+    except AssertionError:
+        print('Resolution must be 84 for testing')
+        return
+
     env = AnimalAIEnv(
         environment_filename='/aaio/test/env/AnimalAI',
         seed=0,
@@ -33,19 +42,26 @@ def main():
         n_arenas=1,
         worker_id=1,
         docker_training=True,
+        resolution=resolution
     )
-
-    env.reset(arenas_configurations=arena_config_in)
 
     print('Running 5 episodes')
 
     for k in range(5):
+
+        env.reset(arenas_configurations=arena_config_in)
         cumulated_reward = 0
         print('Episode {} starting'.format(k))
+
+        try:
+            submitted_agent.reset(t=arena_config_in.arenas[0].t)
+        except Exception as e:
+            print('Agent reset failed during episode {}'.format(k))
+            raise e
         try:
             obs, reward, done, info = env.step([0, 0])
             for i in range(arena_config_in.arenas[0].t):
-                
+
                 action = submitted_agent.step(obs, reward, done, info)
                 obs, reward, done, info = env.step(action)
                 cumulated_reward += reward

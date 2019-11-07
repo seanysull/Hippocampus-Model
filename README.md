@@ -1,5 +1,16 @@
 # Animal-AI Olympics
 
+## The competition is now over
+Final ranking will be computed on a larger test set, the final results will be communicated soon!
+We will also reopen submissions in the coming days in order to allow you to keep working on the Animal-AI Olympics until we disclose the test sets, these new submissions will not count as part of the competition.
+
+## ~~Final Submission Guidelines~~
+~~[Find the details here](https://github.com/beyretb/AnimalAI-Olympics/blob/master/documentation/final_submission.md)~~
+
+## ~~Note for WBA Prize Submissions~~
+
+  ~~-> WBA Submission deatils are available [here](https://www.easychair.org/cfp/AAI2019WBA). Deadline November 1st.~~
+
 <p align="center">
   <img height="300" src="documentation/PrefabsPictures/steampunkFOURcrop.png">
 </p>
@@ -16,7 +27,7 @@ The Animal-AI Olympics is an AI competition with tests inspired by animal cognit
   * 3rd place overall: **$1,500**.
 * WBA-Prize: **$5,000 total value** - $4,000 with up to $1,000 travel to speak at NeurIPS 2019
 * Category Prizes: **$200** For best performance in each category (cannot combine with other prizes - max 1 per team).
-* **Mid-way AWS Research Credits**: The top 20 entries as of **September 1st** will be awarded **$500** of AWS credits.
+* ~~**Mid-way AWS Research Credits**: The top 20 entries as of **September 1st** will be awarded **$500** of AWS credits.~~ (already awarded)
 
 See [competition launch page](https://mdcrosby.com/blog/animalailaunch.html) and official rules for further details.
 
@@ -46,6 +57,8 @@ For the mid-way and final evaluation we will (resources permitting) run more ext
 ## Development Blog
 
 You can read the launch posts - with information about prizes and the categories in the competition here:
+
+[Animal-AI: AWS Prizes and Evaluation: Aug 12th](https://www.mdcrosby.com/blog/animalaiprizes1.html) - with updated submission and test information.
 
 [Animal-AI Evaluation: July 8th](https://mdcrosby.com/blog/animalaieval.html) - with collated information about the evaluation.
 
@@ -78,6 +91,11 @@ We offer two packages for this competition:
     ```
     Or you can install it from the source, head to `animalai/` folder and run `pip install -e .`
 
+    In case you wish to create a conda environment you can do so by running the below command from the `animalai` folder:
+    ```
+    conda env create -f conda_isntall.yaml
+    ```
+
 - We also provide a package that can be used as a starting point for training, and which is required to run most of the 
 example scripts found in the `examples/` folder. At the moment **we only support Linux and Max** for the training examples. It contains an extension of 
 [ml-agents' training environment](https://github.com/Unity-Technologies/ml-agents/tree/master/ml-agents) that relies on 
@@ -102,6 +120,10 @@ You can now unzip the content of the archive to the `env` folder and you're read
 `AnimalAI.*` is in `env/`. On linux you may have to make the file executable by running `chmod +x env/AnimalAI.x86_64`. 
 Head over to [Quick Start Guide](documentation/quickstart.md) for a quick overview of how the environment works.
 
+The Unity source files for the environment can be find on the [AnimalAI-Environment repository](https://github.com/beyretb/AnimalAI-Environment). 
+Due to a lack of resources we cannot provide support on this part of the project at the moment. We recommend reading the documentation on the 
+[ML-Agents repo](https://github.com/Unity-Technologies/ml-agents) too.
+
 ## Manual Control
 
 If you launch the environment directly from the executable or through the VisualizeArena script it will launch in player 
@@ -117,11 +139,19 @@ mode. Here you can control the agent with the following:
 | R   | reset environment   |
 
 ## Citing
+If you use the Animal-AI environment in your work you can cite the environment paper:
 
-**Official Animal-AI Papers Coming Soon**. In the meantime please cite the [Nature: Machine Intelligence piece](https://rdcu.be/bBCQt) for any work involving the competition environment. 
+Beyret, B., Hernández-Orallo, J., Cheke, L., Halina, M., Shanahan, M., Crosby, M. [The Animal-AI Environment: Training and Testing Animal-Like Artificial Cognition](https://arxiv.org/abs/1909.07483), arXiv preprint
 
-Crosby, M., Beyret, B., Halina M. [The Animal-AI Olympics](https://www.nature.com/articles/s42256-019-0050-3) Nature 
-Machine Intelligence 1 (5) p257 2019.
+```
+@inproceedings{Beyret2019TheAE,
+  title={The Animal-AI Environment: Training and Testing Animal-Like Artificial Cognition},
+  author={Benjamin Beyret and Jos'e Hern'andez-Orallo and Lucy Cheke and Marta Halina and Murray Shanahan and Matthew Crosby},
+  year={2019}
+}
+```
+
+Paper with all the details of the test battery will be released after the competition has finished.
 
 ## Unity ML-Agents
 
@@ -137,7 +167,7 @@ Intelligent Agents.](https://arxiv.org/abs/1809.02627) *arXiv preprint arXiv:180
 
 ## EvalAI
 
-The competition is kindly hosted on [EvalAI](https://github.com/Cloud-CV/EvalAI), an open source web application for AI competitions. Special thanks to [Rishabh Jain](https://github.com/RishabhJain2018) for his help in settting this up.
+The competition is kindly hosted on [EvalAI](https://github.com/Cloud-CV/EvalAI), an open source web application for AI competitions. Special thanks to [Rishabh Jain](https://rishabhjain.xyz/) for his help in settting this up.
 
 Deshraj Yadav, Rishabh Jain, Harsh Agrawal, Prithvijit Chattopadhyay, Taranjeet Singh, Akash Jain, Shiv Baran Singh, Stefan Lee and Dhruv Batra (2019) [EvalAI: Towards Better Evaluation Systems for AI Agents](https://arxiv.org/abs/1902.03570)
 
@@ -145,9 +175,6 @@ Deshraj Yadav, Rishabh Jain, Harsh Agrawal, Prithvijit Chattopadhyay, Taranjeet 
 
 In play mode pressing `R` or `C` does nothing sometimes. This is due to the fact that we have synchronized these 
 features with the agent's frames in order to have frames in line with the configuration files for elements such as blackouts. **Solution**: press the key again, several times if needed.
-
-~~When a lot of objects are spawned randomly, extremely rarely, the agent will fall through the floor.~~ (fixed in 
-v0.6.1)
 
 ## TODO
 
@@ -161,6 +188,18 @@ v0.6.1)
 
 ## Version History
 
+- v1.1.1
+    - Hotfix curriculum loading in the wrong order
+    
+- v1.1.0
+    - Add curriculum learning to `animalai-train` to use yaml configurations
+
+- v1.0.5
+    - ~~Adds customisable resolution during evaluation~~ (removed, evaluation is only `84x84`)
+    - Update `animalai-train` to tf 1.14 to fix `gin` broken dependency
+    - Release source code for the environment (no support to be provided on this for now)
+    - Fixes some legacy dependencies and typos in both libraries
+    
 - v1.0.3
     - Adds inference mode to Gym environment
     - Adds seed to Gym Environment
