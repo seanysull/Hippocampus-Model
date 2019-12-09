@@ -3,154 +3,195 @@ import numpy as np
 import scipy.ndimage
 from scipy import stats
 
-import tensorflow as tf
-from tensorflow import keras as keras
-from tensorflow.keras.models import Model, load_model
-from tensorflow.keras.utils import get_custom_objects
-from tensorflow.keras import backend as K
+import keras
+from keras.models import Model, load_model
+from keras import backend as K
+from keras import Sequential
+from keras.layers import Dense
+from keras.optimizers import Adam
 
 
-def G_rate_map(arena_size=[100, 100], theta=0., phase=[50, 50], lamb=500):
 
-    G = np.zeros(arena_size)
-    a = 0.3
-    b = -3. / 2.
-    lambV = (4 * np.pi) / (np.sqrt(3 * lamb))
-    theta = np.radians(theta)
+class Arena(object):
+    
+    def __init__(self, arena_size=[100,100], n_mec=40, n_lec=40):
+        
+        self.dims = arena_size
+        self.n_mec = n_mec
+        self.n_lec = n_lec
+        self.rateMaps = self.create_rateMaps()
+        
+        
+    def create_rateMaps(self):
 
-    for ind, val in np.ndenumerate(G):
+        mec_rateMap = []
+        for ii in range(self.n_mec):
+            lamb = np.random.randint(500, 2000)
+            phase = np.random.randint(0, self.dims[0], 2)
+            m = self.MEC_rateMap(phase=phase, lamb=lamb)
+            mec_rateMap.append(m.flatten())
+        mec_rateMap = np.array(mec_rateMap)
 
-        tmp_g = 0
-        for i in np.deg2rad(np.linspace(-30, 90, 3)):
-            u_f = (np.cos(i + theta), np.sin(i + theta))
-            dist = (ind[0] - phase[0], ind[1] - phase[1])
-            tmp_g += np.cos(lambV * np.dot(u_f, dist))
+        lec_rateMap = []
+        for ii in range(self.n_lec):
+            l = self.LEC_rateMap(filled_perc=0.2)
+            lec_rateMap.append(l.flatten())
+        lec_rateMap = np.array(lec_rateMap)
 
-        tmp_g = np.exp(np.dot(a, (tmp_g) + b)) - 1
-        G[ind] = tmp_g
+        rateMaps = np.vstack((mec_rateMap, lec_rateMap)).T
 
-    ## Normalize if for learning and LEC integration effiency
-    if G.min() < 0: G += abs(G.min())
-    G = (G - G.min()) / (G.max() - G.min())
+        return rateMaps
+        
+        
+    def MEC_rateMap(self, theta=0., phase=[50, 50], lamb=500):
 
-    return G
+        M = np.zeros(self.dims)
+        a = 0.3
+        b = -3. / 2.
+        lambV = (4 * np.pi) / (np.sqrt(3 * lamb))
+        theta = np.radians(theta)
 
+        for ind, val in np.ndenumerate(M):
 
-def LEC_rate_map(arena_size=[100, 100], filled_perc=0.3):
+            tmp_m = 0
+            for i in np.deg2rad(np.linspace(-30, 90, 3)):
+                u_f = (np.cos(i + theta), np.sin(i + theta))
+                dist = (ind[0] - phase[0], ind[1] - phase[1])
+                tmp_m += np.cos(lambV * np.dot(u_f, dist))
 
-    a = np.zeros(36)
-    a[: int(filled_perc * 25)] = 1
-    np.random.shuffle(a)
-    a = a.reshape(6, 6)
+            tmp_m = np.exp(np.dot(a, (tmp_m) + b)) - 1
+            M[ind] = tmp_m
 
-    b = np.zeros((arena_size[0], arena_size[1]))
+        if M.min() < 0: 
+            M += abs(M.min())
+            
+        M = (M - M.min()) / (M.max() - M.min())
 
-    for i in range(arena_size[0]):
-        for j in range(arena_size[1]):
-            idx1 = i * len(a) // arena_size[0]
-            idx2 = j * len(a) // arena_size[1]
-            b[i][j] = a[idx1][idx2]
-
-    arena = scipy.ndimage.filters.gaussian_filter(b, 4)
-    arena *= 0.6
-
-    return arena
-
-
-def create_arena(n_grid, n_lec):
-    global G_rate_map, LEC_rate_map
-
-    arena_size = [50, 50]
-
-    grid_data = []
-    for ii in range(n_grid):
-        lamb = np.random.randint(500, 2000)
-        phase = np.random.randint(0, arena_size[0], 2)  ## This is assuming arena is a square
-        g = G_rate_map(arena_size=arena_size, phase=phase, lamb=lamb)
-        grid_data.append(g.flatten())
-    grid_data = np.array(grid_data)
-
-    lec_1_data = []
-    for ii in range(n_lec):
-        l = LEC_rate_map(arena_size=arena_size, filled_perc=0.2)
-        lec_1_data.append(l.flatten())
-    lec_1_data = np.array(lec_1_data)
-
-    # Make data structure combining both MEC and LEC_1
-    data = np.vstack((grid_data, lec_1_data))
-    data = data.T
-
-    return data
+        return M
 
 
-def modify_arena(data, data2, dd, n_grid, n_lec):
-    global create_arena
+    def LEC_rateMap(self, filled_perc=0.3):
 
-    #data2 = create_arena(n_grid, n_lec)
-    data2[:, :n_grid] = data[:, :n_grid]
+        a = np.zeros(36)
+        a[: int(filled_perc * 25)] = 1
+        np.random.shuffle(a)
+        a = a.reshape(6, 6)
 
-    new_data = np.zeros_like(data)
+        b = np.zeros(self.dims)
 
-    idx = np.arange(data.shape[0])
-    np.random.shuffle(idx)
+        for i in range(self.dims[0]):
+            for j in range(self.dims[1]):
+                idx1 = i * len(a) // self.dims[0]
+                idx2 = j * len(a) // self.dims[1]
+                b[i][j] = a[idx1][idx2]
 
-    new_data[idx[int(idx.size * dd):]] = data[idx[int(idx.size * dd):]]
-    new_data[idx[:int(idx.size * dd)]] = data2[idx[:int(idx.size * dd)]]
+        arena = scipy.ndimage.filters.gaussian_filter(b, 4)
+        arena *= 0.6
 
-    return new_data
+        return arena
+
+    
+    # dd goes from 0 to 1 and it's the extent by which the current LEC rate maps are substituted by new ones.
+    def modify_LEC_maps(self, dd, permanent=True):
+        
+        rateMaps2 = self.create_rateMaps()
+        rateMaps2[:, :self.n_mec] = self.rateMaps[:, :self.n_mec]
+
+        new_rateMaps = np.zeros_like(self.rateMaps)
+
+        idx = np.arange(self.rateMaps.shape[0])
+        np.random.shuffle(idx)
+
+        new_rateMaps[idx[int(idx.size * dd):]] = self.rateMaps[idx[int(idx.size * dd):]]
+        new_rateMaps[idx[:int(idx.size * dd)]] = rateMaps2[idx[:int(idx.size * dd)]]
+        
+        if permanent:
+            self.rateMaps = new_rateMaps
+        
+        return new_rateMaps
+    
+    
+    def get_rateMaps(self):
+        
+        return self.rateMaps
+    
+    
+    def plot_rateMaps(self):
+        
+        print('MEC maps')
+        plt.figure(figsize=(15,15))
+        for i, cell_n in enumerate(np.random.randint(0, self.n_mec, int(4*4))):
+            plt.subplot(4,4,i+1)
+            plt.imshow(self.rateMaps[:,cell_n].reshape(self.dims))
+            plt.axis('off')
+        plt.show()
+            
+        print('')
+        print('LEC maps')
+        plt.figure(figsize=(15,15))
+        for i, cell_n in enumerate(np.random.randint(self.n_mec, self.n_mec+self.n_lec, int(4*4))):
+            plt.subplot(4,4,i+1)
+            plt.imshow(self.rateMaps[:,cell_n].reshape(self.dims))
+            plt.axis('off')
+        plt.show()
 
 
-def custom_softmax_DG(x):
-    beta = 1.
-    xx = beta*x
-    e = K.exp(xx-K.max(xx, axis=-1, keepdims=True))
-    s = K.sum(e, axis=-1, keepdims=True)
-    return e / s
+    
+class HPC(object):
+    
+    def __init__(self, n_DG, n_CA3, n_CA1, dim):
+        
+        self.n_DG = n_DG
+        self.n_CA3 = n_CA3
+        self.n_CA1 = n_CA1
+        self.dim = dim
+        
+        self.model = self.create_model()
 
-get_custom_objects().update({'custom_softmax_DG': keras.layers.Activation(custom_softmax_DG)})
+        
+    def create_model(self):
 
+        model = Sequential([
+            Dense(self.n_DG, activation='relu', name='DG', input_shape=(self.dim,)),
+            Dense(self.n_CA3, activation='relu', name='CA3'),
+            Dense(self.n_CA1, activation='relu', name='CA1'),
+            Dense(self.dim, activation='relu', name='EC')
+        ])
 
-def custom_softmax_CA3(x):
-    beta = 1.
-    xx = beta*x
-    e = K.exp(xx-K.max(xx, axis=-1, keepdims=True))
-    s = K.sum(e, axis=-1, keepdims=True)
-    return e / s
+        optimizer = Adam(lr=0.001)
+        model.compile(loss='mse', optimizer=optimizer, metrics=['mae'])
+        
+        model.summary()
 
-get_custom_objects().update({'custom_softmax_CA3': keras.layers.Activation(custom_softmax_CA3)})
+        return model
+    
+    
+    def save_model(self, name='model'):
+        
+        self.model.save(name+'.h5')
+    
+    
+    def load_model(self, name='model'):
+        
+        self.model = load_model(name+'.h5')
 
+        
+    def train(self, data, epochs=100):
 
-def create_model(n_DG, n_CA3, n_CA1, dim):
-    global custom_softmax_DG, custom_softmax_CA3
+        idx = np.arange(data.shape[0])
+        np.random.shuffle(idx)
 
-    model = keras.Sequential([
-        keras.layers.Dense(n_DG, activation=tf.nn.relu, input_shape=(dim,)),
-        #keras.layers.Activation(custom_softmax_DG),
-        keras.layers.Dense(n_CA3, activation=tf.nn.relu),
-        keras.layers.Activation(custom_softmax_CA3),
-        keras.layers.Dense(n_CA1, activation=tf.nn.relu),
-        keras.layers.Dense(dim, activation=tf.nn.relu)
-    ])
+        history = self.model.fit(data[idx], data[idx], epochs=epochs, validation_split=0.2, verbose=0)
 
-    optimizer = tf.train.RMSPropOptimizer(0.001)
-    model.compile(loss='mse', optimizer=optimizer, metrics=['mae'])
-
-    return model
-
-
-## Callback function is deactivated
-def fit(model, data, save_weights=True):
-    #f_cb = keras.callbacks.EarlyStopping(monitor='val_loss', min_delta=0.0001, patience=2,
-                                         #verbose=0, mode='auto', baseline=None)  # min_delta=0.01, patience=10
-
-    EPOCHS = 1000
-    idx = np.arange(data.shape[0])
-    np.random.shuffle(idx)
-
-    history = model.fit(data[idx], data[idx], epochs=EPOCHS, validation_split=0.2, verbose=0)#, callbacks=[f_cb])
-
-    if save_weights:
-        model.save_weights('model.h5')
-
-    return history
-
+        return history
+    
+    
+    def test(self, data):
+        
+        return self.model.predict(data)
+    
+    
+    def get_output(self, layer, data):
+        
+        model = Model(inputs=self.model.inputs, outputs=self.model.get_layer(layer).output)
+        return model.predict(data)
