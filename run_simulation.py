@@ -33,7 +33,9 @@ while True:
     take_action_vector = agent.random_exploration()
     info_dict = env.step(vector_action=take_action_vector)
     brain_info = info_dict["Learner"]
+    vector_observations = brain_info.vector_observations[0]
     visual_observation = brain_info.visual_observations[0]
-    agent.step(visual_observation)
+    observations = [vector_observations, visual_observation]
+    agent.step(observations)
 
 

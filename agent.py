@@ -20,6 +20,7 @@ class Agent(object):
         # self.vision = Conv_Autoencoder()
         self.video_frames = []
         self.video_dump_count = 0
+        self.speed_vectors = []
 
     def reset(self, t=250):
         """
@@ -46,7 +47,8 @@ class Agent(object):
 
         self.iteration_counter += 1
         self.random_movement_counter += 1
-        self.video_frames.append(obs)
+        self.speed_vectors.append
+        self.video_frames.append(obs[1])
         if len(self.video_frames) == 10000:
             video_data = np.concatenate(self.video_frames)
             np.save("video_data/normed_video_frames_"+str(self.video_dump_count), video_data)
