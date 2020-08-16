@@ -2,8 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.signal as signal
 import time
+import random
 
-ROW,COL = 10,9
+ROW,COL = 50,50
 class Grid():
     def __init__(self):
 
@@ -14,9 +15,9 @@ class Grid():
         self.SIGMA = 0.24
         self.SIGMA2 = self.SIGMA ** 2
         self.TT = 0.05
-        # self.grid_gain = [0.04, 0.05, 0.06, 0.07, 0.08]
+        self.grid_gain = [0.03, 0.05, 0.07, 0.09]
         # self.grid_gain = [0.02, 0.1]
-        self.grid_gain = [0.08]
+        # self.grid_gain = [0.08]
         self.grid_layers = len(self.grid_gain)
         self.grid_activity = np.random.uniform(0, 1, (self.mm, self.nn, self.grid_layers))
         # self.distTri = self.buildTopology_s(self.mm, self.nn)
@@ -170,7 +171,7 @@ def random_navigation(length):
     # plt.show()
 
 
-random_navigation(10000)
+random_navigation(50)
 
 Txx = np.array(Txx)
 Tyy = np.array(Tyy)
@@ -182,9 +183,13 @@ log_matrices = []
 start_time = time.time()
 for i in range(1, Txx.size):
     speedVector = np.array([Txx[i] - Txx[i - 1], Tyy[i] - Tyy[i - 1]])
+    print ("Speed Vector --->  ", speedVector)
     # speedVector = speedVector.reshape((2,))
     # speedVector = (Txx[i] - Txx[i - 1])+1j*(Tyy[i] - Tyy[i - 1])
+    update_start = time.time()
     grid.update_s(speedVector)
+    update_done = time.time()-update_start
+    print("update time ---->", update_done)
     # grid.update(speedVector)
     activity_flat = grid.grid_activity.flatten()
     activity = np.copy(np.squeeze(grid.grid_activity))
@@ -202,7 +207,9 @@ yy = np.copy(Tyy[1:])
 dv_levels = 1
 
 
-plt.figure(figsize=(24, 20))
+# =============================================================================
+# plt.figure(figsize=(24, 20))
+# =============================================================================
 # plt.plot(xx, yy)
 # plt.figure()
 
