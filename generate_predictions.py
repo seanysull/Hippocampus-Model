@@ -7,14 +7,14 @@ import tensorflow as tf
 from numpy.random import default_rng
 from denoiser import DataGenerator
 from tensorflow.keras.models import Model
-
+from denoiser import kl_divergence_regularizer
 DATA_PATH = "data/simulation_data_2807_50000steps.h5"
 # =============================================================================
 # embed_path = "data/simulation_data_2607_10000steps.h5_ladderv5_fulldata.hdf5"
 # =============================================================================
 DATA_NAME = "visual_obs"
-MODEL_NAME = "trained_models/denoiseV4.hdf5-07.hdf5"
-PIC_NAME = "denoiser_check_round3"
+MODEL_NAME = "trained_models/denoiseV7_dense_constrained_nopool.hdf5-01.hdf5"
+PIC_NAME = "denoiseV7_dense_constrained_nopool"
 BATCH = 25
 DIM = [256, 256]
 CHANNELS = 3
@@ -41,6 +41,7 @@ with h5py.File(DATA_PATH, "r") as f:
 # =============================================================================
     
 autoencoder = tf.keras.models.load_model(MODEL_NAME,
+                                         custom_objects={"kl_divergence_regularizer":kl_divergence_regularizer},
                                          compile=True)
 
 # =============================================================================
@@ -49,10 +50,15 @@ autoencoder = tf.keras.models.load_model(MODEL_NAME,
 #                                          compile=True)
 # =============================================================================
 autoencoder.summary()
-layer_name = autoencoder.layers[22].name
-encoder = Model(inputs=autoencoder.input,
-                                 outputs=autoencoder.get_layer(layer_name).output)
-   
+# =============================================================================
+# layer_name = autoencoder.layers[22].name
+# =============================================================================
+layer_name = "dense_4"
+# =============================================================================
+# encoder = Model(inputs=autoencoder.input,
+#                                  outputs=autoencoder.get_layer(layer_name).output)
+#    
+# =============================================================================
 # use the convolutional autoencoder to make predictions on the
 # testing images, then initialize our list of output images
 print("making predictions...")
@@ -64,7 +70,9 @@ print("making predictions...")
 # temple_generator = DataGenerator(temple_indices, DATA_PATH, DATA_NAME,
 #                  to_fit=False, batch_size=5, shuffle=False)
 # =============================================================================
-encoded = encoder.predict(predict_generator, workers=4, use_multiprocessing=False) 
+# =============================================================================
+# encoded = encoder.predict(predict_generator, workers=4, use_multiprocessing=False) 
+# =============================================================================
 # =============================================================================
 # encode = encoded.reshape((1000, 2*2*64))
 # =============================================================================

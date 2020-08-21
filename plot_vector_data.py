@@ -15,11 +15,12 @@ import h5py
 import tensorflow as tf
 from tensorflow.keras import Model
 import pandas as pd
-from scipy.stats import binned_statistic_2d, binned_statistic
+from scipy.stats import binned_statistic_2d, binned_statistic, binned_statistic_dd
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import minmax_scale
 from scipy.ndimage import gaussian_filter
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-
+from denoiser import kl_divergence_regularizer
 
 def colorbar(mappable):
     last_axes = plt.gca()
@@ -61,7 +62,7 @@ def occupancy_map(xy_path, num_bins=20):
 
     ax.images.append(im)
     fig.colorbar(im)
-    fig.savefig('rate_maps/occupancy.png',format='png', dpi=300)    
+    fig.savefig('rate_maps/occupancy_stretch.png',format='png', dpi=300)    
     
 def plot_ratemaps_cae(xy_path, embed_path, 
                       stat_type="mean", num_bins=100):
@@ -103,7 +104,7 @@ def plot_ratemaps_cae(xy_path, embed_path,
     print("images written")
 
 def plot_ratemaps_hae(xy_path, embed_path, hippo_path,
-                  stat_type="mean", num_bins=100):
+                  stat_type="mean", num_bins=100, stretched = False):
     
     with h5py.File(xy_path, 'r') as f:
         vec_data = f["vector_obs"][:]
@@ -113,7 +114,8 @@ def plot_ratemaps_hae(xy_path, embed_path, hippo_path,
     
     
     hippocampus = tf.keras.models.load_model(hippo_path, 
-                                             custom_objects=None, 
+                                             custom_objects={"kl_divergence_regularizer":kl_divergence_regularizer},
+                                             #custom_objects=None,
                                              compile=True)
     
     layer_names = ["EC_in","DG","CA3","CA1","EC_out"]
@@ -134,7 +136,7 @@ def plot_ratemaps_hae(xy_path, embed_path, hippo_path,
     for name, activation in name_activations:
         for cell in range(activation.shape[1]):
 # =============================================================================
-#         for cell in range(5):
+#         for cell in range(25):
 # =============================================================================
             res = binned_statistic_2d(x_positions, z_positions, 
                                       activation[:,cell], 
@@ -149,18 +151,18 @@ def plot_ratemaps_hae(xy_path, embed_path, hippo_path,
 #             thresh = bin_statistic < bin_statistic.max()*0.9
 #             bin_statistic[thresh] = 0
 # ============================================================================= 
-            blurred = gaussian_filter(bin_statistic,sigma=1.5)
+            blurred = gaussian_filter(bin_statistic, sigma=1.5)
 
             fig = plt.figure(figsize=(10, 10))
             ax = fig.add_subplot(111, title=name+' : '+str(cell),
                     aspect='equal', xlim=x_edges[[0, -1]], ylim=z_edges[[0, -1]])
             ax.grid(False)
-            im = NonUniformImage(ax, interpolation='bilinear', cmap=cm.Reds)
+            im = NonUniformImage(ax, interpolation='bilinear', cmap=cm.Greens)
             
             xcenters = (x_edges[:-1] + x_edges[1:]) / 2
-            ycenters = (z_edges[:-1] + z_edges[1:]) / 2
+            zcenters = (z_edges[:-1] + z_edges[1:]) / 2
             
-            im.set_data(xcenters, ycenters, blurred)
+            im.set_data(xcenters, zcenters, blurred)
 # =============================================================================
 #             im.set_clim(0,1)
 # =============================================================================
@@ -170,14 +172,18 @@ def plot_ratemaps_hae(xy_path, embed_path, hippo_path,
 # =============================================================================
 #             fig.colorbar(im).set_clim(0,1)
 # =============================================================================
-            fig.savefig('rate_maps/'+name+'/'+name+'_sofplus_'+str(cell)+'.png',
-                        format='png', dpi=300)
+            if stretched:
+                fig.savefig('rate_maps/'+name+'_stretched/'+name+'_sigmoid_reg_test'+str(cell)+'.png',
+                            format='png', dpi=300)
+            else:
+                fig.savefig('rate_maps/'+name+'/'+name+'_sigmoid_reg'+str(cell)+'.png',
+                            format='png', dpi=300)
             plt.close(plt.gcf())
     
         print("images written")
 
 def plot_ratemaps_orientation(xy_path, embed_path, hippo_path,
-                  stat_type="mean", num_bins=100):
+                  stat_type="mean", num_bins=4):
     
     with h5py.File(xy_path, 'r') as f:
         orientations = f["vector_obs"][:,4]
@@ -187,7 +193,7 @@ def plot_ratemaps_orientation(xy_path, embed_path, hippo_path,
     
     
     hippocampus = tf.keras.models.load_model(hippo_path, 
-                                             custom_objects=None, 
+                                             custom_objects={"kl_divergence_regularizer":kl_divergence_regularizer}, 
                                              compile=True)
     
     layer_names = ["EC_in","DG","CA3","CA1","EC_out"]
@@ -213,6 +219,72 @@ def plot_ratemaps_orientation(xy_path, embed_path, hippo_path,
                                    bins=num_bins)
             
             bin_statistic, bin_edges, binnumbers = res
+
+            bin_statistic = np.nan_to_num(bin_statistic)
+            
+# =============================================================================
+#             thresh = bin_statistic < bin_statistic.max()*0.9
+#             bin_statistic[thresh] = 0
+# =============================================================================
+
+            blurred = gaussian_filter(bin_statistic,sigma=50)
+            scaled = minmax_scale(blurred.reshape(-1, 1))
+            fig = plt.figure(figsize=(10, 10))
+            ax = fig.add_subplot(111, title=name+' : '+str(cell))
+# =============================================================================
+#                     aspect='equal', xlim=x_edges[[0, -1]], ylim=z_edges[[0, -1]])
+# =============================================================================
+            ax.grid(False)
+            ax.plot(bin_edges[1:], scaled, color="Purple")
+# =============================================================================
+#             ax.set_ylim(0,1)
+#             ax.set_yticks([0.1,0.3,0.5,0.7,0.9])
+# =============================================================================
+            fig.savefig('rate_maps/'+name+'_Orient'+'/'+name+'_sigmoid_bl3_loadzabins'+str(cell)+'.png',
+                        format='png', dpi=300)
+            plt.close(plt.gcf())
+    
+        print("images written")
+
+def conjunctive_place_orient(xy_path, embed_path, hippo_path,
+                  stat_type="mean", num_bins=100):
+
+    with h5py.File(xy_path, 'r') as f:
+        orientations = f["vector_obs"][:,[0,1,4]]
+        
+    with h5py.File(embed_path, 'r') as f:    
+        embeddings = f["embeddings"][:]
+    
+    
+    hippocampus = tf.keras.models.load_model(hippo_path, 
+                                             custom_objects={"kl_divergence_regularizer":kl_divergence_regularizer}, 
+                                             compile=True)
+    
+    layer_names = ["EC_in","DG","CA3","CA1","EC_out"]
+    
+    layer_outputs = [hippocampus.get_layer(layer_name).output for 
+                     layer_name in layer_names]
+    
+    intermediate_layer_model = Model(inputs=hippocampus.input,
+                                     outputs=layer_outputs)
+    
+    EC_in, DG, CA3, CA1, EC_out = intermediate_layer_model.predict(embeddings)
+    
+    name_activations = zip(layer_names, (EC_in, DG, CA3, CA1, EC_out))
+        
+    for name, activation in name_activations:
+        for cell in range(activation.shape[1]):
+# =============================================================================
+#         for cell in range(5):
+# =============================================================================
+            res = binned_statistic_dd(orientations, 
+                                   activation[:,cell], 
+                                   stat_type, 
+                                   bins=num_bins)
+            
+            bin_statistic, bin_edges, binnumbers = res
+            bin_statistic = np.nan_to_num(bin_statistic)
+            scaled = minmax_scale(bin_statistic.reshape(-1, 1))
 # =============================================================================
 #             bin_statistic = np.nan_to_num(bin_statistic)
 # =============================================================================
@@ -221,24 +293,23 @@ def plot_ratemaps_orientation(xy_path, embed_path, hippo_path,
 #             bin_statistic[thresh] = 0
 # =============================================================================
 
-            blurred = gaussian_filter(bin_statistic,sigma=3)
+            blurred = gaussian_filter(scaled,sigma=5)
             fig = plt.figure(figsize=(10, 10))
             ax = fig.add_subplot(111, title=name+' : '+str(cell))
 # =============================================================================
 #                     aspect='equal', xlim=x_edges[[0, -1]], ylim=z_edges[[0, -1]])
 # =============================================================================
             ax.grid(False)
-            ax.plot(bin_edges[1:], bin_statistic)
+            ax.plot(bin_edges[1:], blurred)
 # =============================================================================
 #             ax.set_ylim(0,1)
 #             ax.set_yticks([0.1,0.3,0.5,0.7,0.9])
 # =============================================================================
-            fig.savefig('rate_maps/'+name+'_Orient'+'/'+name+'_softplus_'+str(cell)+'.png',
+            fig.savefig('rate_maps/'+name+'_Orient'+'/'+name+'_sigmoid_bl3_'+str(cell)+'.png',
                         format='png', dpi=300)
             plt.close(plt.gcf())
     
-        print("images written")
-            
+        print("images written")            
 def normalise_velocity_orientation():
     with h5py.File(xy_path, 'r') as f:
         vec_data = f["vector_obs"][:10,4]
@@ -246,22 +317,25 @@ def normalise_velocity_orientation():
     a=1
     
 if __name__ == "__main__":
-    xy_path = "data/simulation_data_2807_50000steps.h5"
-    embed_path = "data/simulation_data_2807_50000steps.h5_denoiseV4_50000.h5"
-    hippo_path = "trained_models/denoiseV4.hdf5-07.hdf5_hippocampus_V9.h5"
+    xy_path = "data/simulation_data_1608_100000steps.h5"
+    embed_path = "data/simulation_data_1608_100000steps.h5_denoiseV4_100000_stretch.h5"
+    hippo_path = "trained_models/denoiseV4.hdf5-07.hdf5_hippocampus_V10_sigmoid_reg.h5"
 
 # =============================================================================
 #     occupancy_map(xy_path)    
+#     plot_ratemaps_hae(xy_path, embed_path, hippo_path, 
+#                       stat_type="mean", num_bins=[25,25], stretched=True)
 # =============================================================================
-# =============================================================================
-#     plot_ratemaps_hae(xy_path, embed_path, hippo_path, stat_type="mean", num_bins=25)
-# =============================================================================
-    plot_ratemaps_orientation(xy_path, embed_path, hippo_path, stat_type="mean", num_bins=10)
+    plot_ratemaps_orientation(xy_path, embed_path, hippo_path, stat_type="mean", num_bins=2880)
 # =============================================================================
 #     normalise_velocity_orientation()
 # =============================================================================
-    
-    
+# =============================================================================
+#     conjunctive_place_orient(xy_path, embed_path, 
+#                              hippo_path,stat_type="mean", 
+#                              num_bins=[50,50,4])
+#     
+# =============================================================================
     
     
     

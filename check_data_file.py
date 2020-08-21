@@ -13,7 +13,7 @@ import time
 # with h5py.File("data/simulation_data_2607_10000steps.h5_denoiseV1_medio.h5", 'r') as f:
 #     vec_data = f["embeddings"][:]
 # =============================================================================
-with h5py.File("data/simulation_data_2807_50000steps.h5_denoiseV3_50000.h5", 'r') as f:
+with h5py.File("data/simulation_data_2807_50000steps.h5_denoiseV5dense_2807_50000.h5", 'r') as f:
     ims = f["embeddings"][range(0,50000,100)]
 
 # =============================================================================

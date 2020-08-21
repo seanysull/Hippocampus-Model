@@ -11,7 +11,6 @@ from tensorflow.keras.layers import BatchNormalization
 from tensorflow.keras.layers import Conv2D
 from tensorflow.keras.layers import Conv2DTranspose
 from tensorflow.keras.layers import LeakyReLU
-from tensorflow.keras.layers import ReLU
 from tensorflow.keras.layers import Activation
 from tensorflow.keras.layers import Flatten
 from tensorflow.keras.layers import Dense
@@ -43,7 +42,8 @@ import matplotlib
 matplotlib.use("Agg")
 
 
-def build_autoencoder(width=256, height=256, depth=3,filter_number=120, filter_size=3, latentDim=300):
+
+def build_autoencoder(width=256, height=256, depth=3,filter_number=100, filter_size=3, latentDim=300):
     # initialize the input shape to be "channels last" along with
     # the channels dimension itself
 
@@ -52,78 +52,142 @@ def build_autoencoder(width=256, height=256, depth=3,filter_number=120, filter_s
        
     # define the input to the encoder
     inputs = Input(shape=inputShape)
-    x = GaussianNoise(0.2)(inputs)
+    x = GaussianNoise(0.3)(inputs)
     
-    x = Conv2D(filter_number, filter_size, strides=2, padding="same")(x)       
+    x = Conv2D(filter_number, filter_size, strides=1, padding="same")(x)
+    x = LeakyReLU(alpha=0.2)(x)       
     x = BatchNormalization(axis=chanDim)(x)
-    x = LeakyReLU(alpha=0.2)(x)
-   
-    x = Conv2D(filter_number, filter_size, strides=2, padding="same")(x)    
-    x = BatchNormalization(axis=chanDim)(x)
-    x = LeakyReLU(alpha=0.2)(x)
 
-    x = Conv2D(filter_number, filter_size, strides=2, padding="same")(x)        
+    x = Conv2D(filter_number, filter_size, strides=2, padding="same")(x)
+    x = LeakyReLU(alpha=0.2)(x)       
     x = BatchNormalization(axis=chanDim)(x)
-    x = LeakyReLU(alpha=0.2)(x)
-
-    x = Conv2D(filter_number, filter_size, strides=2, padding="same")(x)    
+    
+    x = Conv2D(filter_number, filter_size, strides=1, padding="same")(x)    
+    x = LeakyReLU(alpha=0.2)(x)       
     x = BatchNormalization(axis=chanDim)(x)
-    x = LeakyReLU(alpha=0.2)(x)
 
-    x = Conv2D(filter_number, filter_size, strides=2, padding="same")(x)    
+    x = Conv2D(filter_number, filter_size, strides=2, padding="same")(x)
+    x = LeakyReLU(alpha=0.2)(x)       
     x = BatchNormalization(axis=chanDim)(x)
-    x = LeakyReLU(alpha=0.2)(x)
 
-    x = Conv2D(filter_number, filter_size, strides=2, padding="same")(x)    
+    x = Conv2D(filter_number, filter_size, strides=1, padding="same")(x)        
+    x = LeakyReLU(alpha=0.2)(x)       
     x = BatchNormalization(axis=chanDim)(x)
-    x = LeakyReLU(alpha=0.2)(x)
 
-    x = Conv2D(int(filter_number/2), filter_size, strides=2, padding="same", 
-               activation="sigmoid")(x)    
+    x = Conv2D(filter_number, filter_size, strides=2, padding="same")(x)
+    x = LeakyReLU(alpha=0.2)(x)       
+    x = BatchNormalization(axis=chanDim)(x)
+
+    x = Conv2D(filter_number, filter_size, strides=1, padding="same")(x)    
+    x = LeakyReLU(alpha=0.2)(x)       
+    x = BatchNormalization(axis=chanDim)(x)
+
+    x = Conv2D(filter_number, filter_size, strides=2, padding="same")(x)
+    x = LeakyReLU(alpha=0.2)(x)       
+    x = BatchNormalization(axis=chanDim)(x)
+
+    x = Conv2D(filter_number, filter_size, strides=1, padding="same")(x)    
+    x = LeakyReLU(alpha=0.2)(x)       
+    x = BatchNormalization(axis=chanDim)(x)
+
+    x = Conv2D(filter_number, filter_size, strides=2, padding="same")(x)
+    x = LeakyReLU(alpha=0.2)(x)       
+    x = BatchNormalization(axis=chanDim)(x)
+
+    x = Conv2D(filter_number, filter_size, strides=1, padding="same")(x)    
+    x = LeakyReLU(alpha=0.2)(x)       
+    x = BatchNormalization(axis=chanDim)(x)
+
+    x = Conv2D(filter_number, filter_size, strides=2, padding="same")(x)
+    x = LeakyReLU(alpha=0.2)(x)       
+    x = BatchNormalization(axis=chanDim)(x)
+
+    x = Conv2D(filter_number, filter_size, strides=1, padding="valid")(x)
+    x = LeakyReLU(alpha=0.2)(x)    
+    x = BatchNormalization(axis=chanDim)(x)
+    
 # =============================================================================
+#     x = Conv2D(filter_number, filter_size, strides=1, padding="valid")(x)
+#     x = LeakyReLU(alpha=0.2)(x)    
+#     x = BatchNormalization(axis=chanDim)(x)
+# 
+# =============================================================================
+    volumeSize = K.int_shape(x)
+    print(volumeSize)
+    x = Flatten(name="latent")(x)
+# =============================================================================
+#     flat_size = K.int_shape(x)
+#     print(flat_size[-1])
+#     # flatten the network and then construct our latent vector
+#     latent = Dense(400, activation="sigmoid",
+#                    activity_regularizer=kl_divergence_regularizer,
+#                    name="latent")(x)
+#     x = Dense(flat_size[-1])(latent)
+# =============================================================================
+    x = Reshape((volumeSize[1], volumeSize[2], volumeSize[3]))(x)
+
+# =============================================================================
+#     x = Conv2DTranspose(filter_number, filter_size, strides=2, padding="valid")(x)
+#     x = LeakyReLU(alpha=0.2)(x)
 #     x = BatchNormalization(axis=chanDim)(x)
 # =============================================================================
-
-    volumeSize = K.int_shape(x)
-    latent = Flatten()(x)
-    # flatten the network and then construct our latent vector
-       
-    x = Reshape((volumeSize[1], volumeSize[2], volumeSize[3]))(latent)
-
-    x = UpSampling2D(size=2, interpolation="nearest")(x)
-    x = Conv2DTranspose(filter_number, filter_size, strides=1, padding="same")(x)
-    x = BatchNormalization(axis=chanDim)(x)
-    x = LeakyReLU(alpha=0.2)(x)
-
-    x = UpSampling2D(size=2, interpolation="nearest")(x)    
-    x = Conv2DTranspose(filter_number, filter_size, strides=1, padding="same")(x)
-    x = BatchNormalization(axis=chanDim)(x)
-    x = LeakyReLU(alpha=0.2)(x)
     
-    x = UpSampling2D(size=2, interpolation="nearest")(x)
-    x = Conv2DTranspose(filter_number, filter_size, strides=1, padding="same")(x)
-    x = BatchNormalization(axis=chanDim)(x)
+    x = Conv2DTranspose(filter_number, filter_size, strides=2, padding="same")(x)
     x = LeakyReLU(alpha=0.2)(x)
-    
-    x = UpSampling2D(size=2, interpolation="nearest")(x)
-    x = Conv2DTranspose(filter_number, filter_size, strides=1, padding="same")(x)
     x = BatchNormalization(axis=chanDim)(x)
-    x = LeakyReLU(alpha=0.2)(x)
-    
-    x = UpSampling2D(size=2, interpolation="nearest")(x)
-    x = Conv2DTranspose(filter_number, filter_size, strides=1, padding="same")(x)
-    x = BatchNormalization(axis=chanDim)(x)
-    x = LeakyReLU(alpha=0.2)(x)
-    
-    x = UpSampling2D(size=2, interpolation="nearest")(x)
-    x = Conv2DTranspose(filter_number, filter_size, strides=1, padding="same")(x)
-    x = BatchNormalization(axis=chanDim)(x)
-    x = LeakyReLU(alpha=0.2)(x)
 
-    x = UpSampling2D(size=2, interpolation="nearest")(x)    
     x = Conv2DTranspose(filter_number, filter_size, strides=1, padding="same")(x)
-    x = BatchNormalization(axis=chanDim)(x)
     x = LeakyReLU(alpha=0.2)(x)
+    x = BatchNormalization(axis=chanDim)(x)
+
+    x = Conv2DTranspose(filter_number, filter_size, strides=2, padding="same")(x)
+    x = LeakyReLU(alpha=0.2)(x)
+    x = BatchNormalization(axis=chanDim)(x)
+   
+    x = Conv2DTranspose(filter_number, filter_size, strides=1, padding="same")(x)
+    x = LeakyReLU(alpha=0.2)(x)
+    x = BatchNormalization(axis=chanDim)(x)
+    
+    x = Conv2DTranspose(filter_number, filter_size, strides=2, padding="same")(x)
+    x = LeakyReLU(alpha=0.2)(x)
+    x = BatchNormalization(axis=chanDim)(x)
+
+    x = Conv2DTranspose(filter_number, filter_size, strides=1, padding="same")(x)
+    x = LeakyReLU(alpha=0.2)(x)
+    x = BatchNormalization(axis=chanDim)(x)
+    
+    x = Conv2DTranspose(filter_number, filter_size, strides=2, padding="same")(x)
+    x = LeakyReLU(alpha=0.2)(x)
+    x = BatchNormalization(axis=chanDim)(x)
+
+    x = Conv2DTranspose(filter_number, filter_size, strides=1, padding="same")(x)
+    x = LeakyReLU(alpha=0.2)(x)
+    x = BatchNormalization(axis=chanDim)(x)
+    
+    x = Conv2DTranspose(filter_number, filter_size, strides=2, padding="same")(x)
+    x = LeakyReLU(alpha=0.2)(x)
+    x = BatchNormalization(axis=chanDim)(x)
+
+    x = Conv2DTranspose(filter_number, filter_size, strides=1, padding="same")(x)
+    x = LeakyReLU(alpha=0.2)(x)
+    x = BatchNormalization(axis=chanDim)(x)
+    
+    x = Conv2DTranspose(filter_number, filter_size, strides=2, padding="same")(x)
+    x = LeakyReLU(alpha=0.2)(x)
+    x = BatchNormalization(axis=chanDim)(x)
+
+    x = Conv2DTranspose(filter_number, filter_size, strides=1, padding="same")(x)
+    x = LeakyReLU(alpha=0.2)(x)
+    x = BatchNormalization(axis=chanDim)(x)
+    
+    x = Conv2DTranspose(filter_number, filter_size, strides=2, padding="same")(x)
+    x = LeakyReLU(alpha=0.2)(x)
+    x = BatchNormalization(axis=chanDim)(x)
+    
+    x = Conv2DTranspose(filter_number, filter_size, strides=1, padding="same")(x)
+    x = LeakyReLU(alpha=0.2)(x)
+    x = BatchNormalization(axis=chanDim)(x)
+
     outputs = Conv2DTranspose(depth, filter_size, activation="sigmoid", padding="same")(x)
     
     autoencoder = Model(inputs, outputs, name="autoencoder")
@@ -141,13 +205,13 @@ def kl_divergence_regularizer(inputs):
                  + kl_div(1 - 0.25, 1 - means))
 
 def train_autoencoder(DATA_PATH, MODEL_NAME, DATA_NAME = "visual_obs",
-                      EPOCHS = 2,BATCH = 50, NUM_SAMPLES = 100000):
+                      EPOCHS = 2,BATCH = 50, NUM_SAMPLES = 50000):
     # construct our convolutional autoencoder
     print("[INFO] building autoencoder...")
+    autoencoder = build_autoencoder()
 # =============================================================================
-#     autoencoder = build_autoencoder()
+#     autoencoder = load_model(MODEL_NAME, compile=True)    
 # =============================================================================
-    autoencoder = load_model(MODEL_NAME, compile=True)    
     autoencoder.summary()
 # =============================================================================
 #     logdir="logs/" + datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -160,7 +224,7 @@ def train_autoencoder(DATA_PATH, MODEL_NAME, DATA_NAME = "visual_obs",
                                        update_freq=1)
     filepath = MODEL_NAME+"-{epoch:02d}.hdf5"
     checkpoint = ModelCheckpoint(filepath, monitor='val_loss', verbose=0, save_best_only=False, save_weights_only=False, mode='auto', period=1)
-    opt = Adam(lr=1e-3)
+    opt = Adam(lr=1e-2)
 
     autoencoder.compile(loss="mse", optimizer=opt)
 # =============================================================================
@@ -170,7 +234,7 @@ def train_autoencoder(DATA_PATH, MODEL_NAME, DATA_NAME = "visual_obs",
     # construct training data generator and validation generator
     number_train_samples = int(np.floor(NUM_SAMPLES*0.9))
     number_val_samples = int(np.floor(NUM_SAMPLES*0.1))
-    indexes = np.arange(0,NUM_SAMPLES*5,5)
+    indexes = np.arange(0,NUM_SAMPLES)
     np.random.shuffle(indexes)
     train_indexes = indexes[:number_train_samples]
     val_indexes = indexes[number_train_samples:number_train_samples+number_val_samples]
@@ -212,9 +276,12 @@ def generate_embeddings(DATA_PATH, DATA_NAME,EMBED_NAME, MODEL_NAME, BATCH, NUM_
     predict_generator = DataGenerator(range(NUM_SAMPLES), DATA_PATH, DATA_NAME,
                      to_fit=False, batch_size=BATCH, shuffle=False)
     
-    layer_name = autoencoder.layers[21].name
+# =============================================================================
+#     layer_name = autoencoder.layers[21].name
+# =============================================================================
+    layer_name = "dense_4"    
     encoder = Model(inputs=autoencoder.input,
-                                 outputs=autoencoder.get_layer(layer_name).output)
+                    outputs=autoencoder.get_layer(layer_name).output)
     encoded = encoder.predict(predict_generator)
 # =============================================================================
 #     encoded = encoded.reshape((NUM_SAMPLES,2*2*60))
@@ -372,25 +439,25 @@ class DataGenerator(Sequence):
 
 if __name__ == '__main__':
     DATA_PATH = "data/simulation_data_2807_50000steps.h5"
-    MODEL_NAME = "trained_models/denoiseV4.hdf5-07.hdf5"
+    MODEL_NAME = "trained_models/denoiseV8_allconv.hdf5"
     DATA_NAME = "visual_obs"
-    EMBED_NAME = DATA_PATH+"_denoiseV4_50000.h5"
-    EPOCHS = 50
-    BATCH = 50
+    EMBED_NAME = DATA_PATH+"_denoiseVdense_2807_50000.h5"
+    EPOCHS = 5
+    BATCH = 10
     NUM_SAMPLES = 50000
 
 # =============================================================================
 #     inspect()
 # =============================================================================
-# =============================================================================
-#     train_autoencoder(DATA_PATH,MODEL_NAME, DATA_NAME, EPOCHS, BATCH, NUM_SAMPLES)
-# =============================================================================
+    train_autoencoder(DATA_PATH,MODEL_NAME, DATA_NAME, EPOCHS, BATCH, NUM_SAMPLES)
 # =============================================================================
 #     generate_embeddings(DATA_PATH, DATA_NAME,EMBED_NAME, MODEL_NAME, BATCH, NUM_SAMPLES)
 # =============================================================================
-    train_hippocampus(DATA_PATH=EMBED_NAME, DATA_NAME = "embeddings", 
-                      HMODEL_NAME = MODEL_NAME+"_hippocampus_V10_sigmoid_reg.h5",
-                      BATCH = 50, NUM_SAMPLES = 50000, embed_dim = 240,
-                      n_DG = 160, n_CA3 = 80, n_CA1 = 160, EPOCHS=100,activation="sigmoid" )
+# =============================================================================
+#     train_hippocampus(DATA_PATH=EMBED_NAME, DATA_NAME = "embeddings", 
+#                       HMODEL_NAME = MODEL_NAME+"_hippocampus_V11_sigmoid_reg.h5",
+#                       BATCH = 50, NUM_SAMPLES = 50000, embed_dim = 240,
+#                       n_DG = 160, n_CA3 = 80, n_CA1 = 160, EPOCHS=100,activation="sigmoid" )
+# =============================================================================
 
 

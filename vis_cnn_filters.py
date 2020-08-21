@@ -21,7 +21,6 @@ from tensorflow.keras import layers, models
 from tensorflow.keras import backend as K
 from tensorflow.keras.models import load_model
 import tensorflow as tf
-from simple_ladder_network import Combine
 tf.compat.v1.disable_eager_execution() 
  
 def normalize(x):
@@ -278,20 +277,20 @@ def visualize_layer(model,
 if __name__ == '__main__':
     # the name of the layer we want to visualize
     # (see model definition at keras/applications/vgg16.py)
-    MODEL_NAME = 'trained_models/full_ladderv3_smalldata_sigmoidmiddle.hdf5-167.hdf5'
-    LAYER_NAME = 'conv2d_20'
-    autoencoder = load_model(MODEL_NAME,custom_objects={'Combine':Combine}, 
-                                         compile=True)    
+    MODEL_NAME = 'trained_models/denoiseV4.hdf5-07.hdf5'
+    LAYER_NAME = 'conv2d_13'
+    autoencoder = load_model(MODEL_NAME, compile=True)    
     # build the VGG16 network with ImageNet weights
     print('Model loaded.')
     autoencoder.summary()
     subnet = models.Model([autoencoder.inputs[0]], 
                                  [autoencoder.get_layer(LAYER_NAME).output])
+    subnet.summary()
     visualize_layer(autoencoder,
                 subnet,
                 LAYER_NAME,
                 step=1.,
-                epochs=1,
+                epochs=5,
                 upscaling_steps=9,
                 upscaling_factor=1.2,
                 output_dim=(412, 412),
