@@ -13,8 +13,8 @@ DATA_PATH = "data/simulation_data_2807_50000steps.h5"
 # embed_path = "data/simulation_data_2607_10000steps.h5_ladderv5_fulldata.hdf5"
 # =============================================================================
 DATA_NAME = "visual_obs"
-MODEL_NAME = "trained_models/denoiseV7_dense_constrained_nopool.hdf5-01.hdf5"
-PIC_NAME = "denoiseV7_dense_constrained_nopool"
+MODEL_NAME = "trained_models/denoiseV8_allconv.hdf5-01.hdf5"
+PIC_NAME = "denoiseV8_allconv"
 BATCH = 25
 DIM = [256, 256]
 CHANNELS = 3
