@@ -13,13 +13,13 @@ import matplotlib.pyplot as plt
 # from mlagents_envs.side_channel.engine_configuration_channel import EngineConfig, EngineConfigurationChannel
 # =============================================================================
 
-NUM_SAMPLES = 100000
-H5FILE= "data/simulation_data_1608_100000steps.h5"
+NUM_SAMPLES = 50000
+H5FILE= "data/simulation_data_3108_50000steps_morphed100.h5"
 with h5py.File(H5FILE, 'w') as f:
        vec_data = f.create_dataset('vector_obs', (NUM_SAMPLES, 5))
        vis_data = f.create_dataset('visual_obs', (NUM_SAMPLES, 256, 256, 3))
 print("File ready fi dem")
-env_name = "C:/Users/seano/Desktop/unity_builds/craic_stretched_x"
+env_name = "C:/Users/seano/Desktop/unity_builds/morphed_100"
 # =============================================================================
 # engine_configuration_channel = EngineConfigurationChannel()
 # =============================================================================
@@ -124,7 +124,7 @@ print(f"Name of the behavior : {behavior_name}")
 spec = env.behavior_specs[behavior_name]
 
 count = 0       
-for episode in range(100):
+for episode in range(50):
   env.reset()
   decision_steps, terminal_steps = env.get_steps(behavior_name)
   tracked_agent = -1 # -1 indicates not yet tracking
@@ -151,7 +151,9 @@ for episode in range(100):
 # =============================================================================
 #     print(visual_observation)
 # =============================================================================
-    print(vector_observation)
+# =============================================================================
+#     print(vector_observation)
+# =============================================================================
     with h5py.File(H5FILE, 'r+') as f:
         vis_data = f['visual_obs']
         vis_data[count, :, :, :] = visual_observation
@@ -169,7 +171,9 @@ for episode in range(100):
     hard_left = 4
     hard_right = 5
 
-    print(left_ray, centre_ray, right_ray)
+# =============================================================================
+#     print(left_ray, centre_ray, right_ray)
+# =============================================================================
     # Generate an action for all agents
     action = spec.create_random_action(len(decision_steps))
  

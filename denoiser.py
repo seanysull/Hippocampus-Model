@@ -132,13 +132,28 @@ def build_autoencoder(width=256, height=256, depth=3,filter_number=120, filter_s
     return autoencoder
 
 def inspect():
-    autoencoder = build_autoencoder()
-    autoencoder.summary()    
+# =============================================================================
+#     autoencoder = build_autoencoder()
+# =============================================================================
+    MODEL_NAME = "trained_models/denoiseV4.hdf5-07.hdf5"
+    autoencoder = load_model(MODEL_NAME, compile=True)     
+# =============================================================================
+#     hippocampus = tf.keras.models.load_model(MODEL_NAME, 
+#                                              custom_objects={"kl_divergence_regularizer":kl_divergence_regularizer}, 
+#                                              compile=True)    
+# =============================================================================
+    autoencoder.summary()
+# =============================================================================
+#     tf.keras.utils.plot_model(autoencoder, to_file="model_cnn.png", show_shapes=True)
+# =============================================================================
+    
 
 def kl_divergence_regularizer(inputs):
+    target = 0.25
+    rate = 0.01
     means = K.mean(inputs, axis=0)
-    return 0.01 * (kl_div(0.25, means)
-                 + kl_div(1 - 0.25, 1 - means))
+    return rate * (kl_div(target, means)
+                 + kl_div(1 - target, 1 - means))
 
 def train_autoencoder(DATA_PATH, MODEL_NAME, DATA_NAME = "visual_obs",
                       EPOCHS = 2,BATCH = 50, NUM_SAMPLES = 100000):
@@ -208,7 +223,7 @@ def train_autoencoder(DATA_PATH, MODEL_NAME, DATA_NAME = "visual_obs",
 def generate_embeddings(DATA_PATH, DATA_NAME,EMBED_NAME, MODEL_NAME, BATCH, NUM_SAMPLES):
     
     autoencoder = load_model(MODEL_NAME, compile=True)    
-        
+    autoencoder.summary()    
     predict_generator = DataGenerator(range(NUM_SAMPLES), DATA_PATH, DATA_NAME,
                      to_fit=False, batch_size=BATCH, shuffle=False)
     
@@ -228,39 +243,35 @@ def train_hippocampus(DATA_PATH, DATA_NAME = "embeddings",
                       HMODEL_NAME = "trained_models/hippocampus_ladderv8",
                       BATCH = 100, NUM_SAMPLES = 50000, embed_dim = 240,
                       n_DG = 160, n_CA3 = 80, n_CA1 = 160, EPOCHS=50, 
-                      activation="sigmoid", intialiser="glorot"):
+                      activation="sigmoid", initialiser="glorot"):
     
     
     hippocampus = Sequential([
-        Dense(embed_dim,
-              activation=activation,
-              kernel_initializer='lecun_normal',
-              activity_regularizer=kl_divergence_regularizer,
-              name="EC_in",
-              input_shape=(embed_dim,)),
+
         Dense(n_DG, 
               activation=activation,
-              kernel_initializer='lecun_normal',
+              kernel_initializer=initialiser,
               activity_regularizer=kl_divergence_regularizer,
-              name='DG'),
+              name='DG',
+              input_shape=(embed_dim,)),
         Dense(n_CA3,
               activation=activation,
-              kernel_initializer='lecun_normal',
+              kernel_initializer=initialiser,
               activity_regularizer=kl_divergence_regularizer,
               name='CA3'),
         Dense(n_CA1, 
               activation=activation,
-              kernel_initializer='lecun_normal',
+              kernel_initializer=initialiser,
               activity_regularizer=kl_divergence_regularizer,
               name='CA1'),
         Dense(embed_dim, 
               activation=activation,
-              kernel_initializer='lecun_normal',
+              kernel_initializer=initialiser,
               activity_regularizer=kl_divergence_regularizer,
               name='EC_out')
     ])
     
-    opt = Adam(lr=1e-4)
+    opt = Adam(lr=1e-3)
     hippocampus.compile(loss="mse", optimizer=opt)
     hippocampus.summary()
     
@@ -286,6 +297,10 @@ def train_hippocampus(DATA_PATH, DATA_NAME = "embeddings",
                               workers=4, use_multiprocessing=False)
     
     hippocampus.save(HMODEL_NAME, save_format= "h5")
+    losses = history.history["loss"]
+    losses = np.array(losses)
+    np.save("hippo_base_train_losses_1000",losses)
+    print(losses)
     N = np.arange(0, EPOCHS)
     plt.style.use("ggplot")
     plt.figure()
@@ -298,6 +313,44 @@ def train_hippocampus(DATA_PATH, DATA_NAME = "embeddings",
     plt.legend(loc="lower left")
     plt.savefig(HMODEL_NAME+"_train_result.png")
 
+def relearn():
+
+    m25 = "data/simulation_data_2708_50000steps.h5_denoiseV4_morph25_embeddings.h5"
+    m50 = "data/simulation_data_2708_50000steps.h5_denoiseV4_morphed50_embeddings.h5"
+    m75 = "data/simulation_data_3108_50000steps.h5_denoiseV4_morphed75_embeddings.h5"
+    m100 = "data/simulation_data_3108_50000steps.h5_denoiseV4_morphed100_embeddings.h5"
+    model_name = "trained_models/denoiseV4.hdf5-07.hdf5_hippocampus_V12.h5"
+    DATA_NAME = "embeddings"
+    NUM_SAMPLES = 50000
+    for path in [m25,m50,m75,m100]:
+        hippocampus = load_model(model_name,
+                             custom_objects={"kl_divergence_regularizer":kl_divergence_regularizer},
+                             compile=True)
+        
+        number_train_samples = int(np.floor(NUM_SAMPLES*0.9))
+        number_val_samples = int(np.floor(NUM_SAMPLES*0.1))
+        indexes = np.arange(NUM_SAMPLES)
+        np.random.shuffle(indexes)
+        train_indexes = indexes[:number_train_samples]
+        val_indexes = indexes[number_train_samples:number_train_samples+number_val_samples]
+        # =============================================================================
+        # test_indexes = indexes[number_train_samples+number_val_samples:]
+        # =============================================================================
+        
+        train_generator = DataGenerator(train_indexes, path, DATA_NAME,
+                         to_fit=True, batch_size=BATCH, shuffle=True)
+        
+        val_generator = DataGenerator(val_indexes, path, DATA_NAME,
+                         to_fit=True, batch_size=BATCH, shuffle=True)
+        
+        history = hippocampus.fit(train_generator, epochs=1000 , 
+                                  validation_data = val_generator,
+                                  workers=4, use_multiprocessing=False)
+        
+    
+        losses = history.history["loss"]
+        losses = np.array(losses)
+        np.save(path+"1000epoch",losses)
     
 class DataGenerator(Sequence):
     """Generates data for Keras
@@ -371,10 +424,10 @@ class DataGenerator(Sequence):
         return X
 
 if __name__ == '__main__':
-    DATA_PATH = "data/simulation_data_2807_50000steps.h5"
+    DATA_PATH = "data/simulation_data_1608_100000steps_stretched_X.h5"
     MODEL_NAME = "trained_models/denoiseV4.hdf5-07.hdf5"
     DATA_NAME = "visual_obs"
-    EMBED_NAME = DATA_PATH+"_denoiseV4_50000.h5"
+    EMBED_NAME = "data/simulation_data_2807_50000steps.h5_denoiseV4_embeddings.h5"
     EPOCHS = 50
     BATCH = 50
     NUM_SAMPLES = 50000
@@ -388,9 +441,12 @@ if __name__ == '__main__':
 # =============================================================================
 #     generate_embeddings(DATA_PATH, DATA_NAME,EMBED_NAME, MODEL_NAME, BATCH, NUM_SAMPLES)
 # =============================================================================
-    train_hippocampus(DATA_PATH=EMBED_NAME, DATA_NAME = "embeddings", 
-                      HMODEL_NAME = MODEL_NAME+"_hippocampus_V10_sigmoid_reg.h5",
-                      BATCH = 50, NUM_SAMPLES = 50000, embed_dim = 240,
-                      n_DG = 160, n_CA3 = 80, n_CA1 = 160, EPOCHS=100,activation="sigmoid" )
-
+# =============================================================================
+#     train_hippocampus(DATA_PATH=EMBED_NAME, DATA_NAME = "embeddings", 
+#                       HMODEL_NAME = MODEL_NAME+"_hippocampus_V13.h5",
+#                       BATCH = 50, NUM_SAMPLES = 50000, embed_dim = 240,
+#                       n_DG = 160, n_CA3 = 80, n_CA1 = 160, EPOCHS=1000 ,
+#                       activation="sigmoid", initialiser="glorot_normal" )
+# =============================================================================
+    relearn()
 

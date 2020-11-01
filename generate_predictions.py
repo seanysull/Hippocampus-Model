@@ -8,13 +8,13 @@ from numpy.random import default_rng
 from denoiser import DataGenerator
 from tensorflow.keras.models import Model
 from denoiser import kl_divergence_regularizer
-DATA_PATH = "data/simulation_data_2807_50000steps.h5"
+DATA_PATH = "data/simulation_data_2708_50000steps_morphed100.h5"
 # =============================================================================
 # embed_path = "data/simulation_data_2607_10000steps.h5_ladderv5_fulldata.hdf5"
 # =============================================================================
 DATA_NAME = "visual_obs"
-MODEL_NAME = "trained_models/denoiseV8_allconv.hdf5-01.hdf5"
-PIC_NAME = "denoiseV8_allconv"
+MODEL_NAME = "trained_models/denoiseV9_v4_batchact_reverse.hdf5-14.hdf5"
+PIC_NAME = "morph_100"
 BATCH = 25
 DIM = [256, 256]
 CHANNELS = 3
@@ -25,9 +25,11 @@ NUM_SAMPLES = 10000
 # test_indices = np.sort(rng.choice(NUM_SAMPLES,25,False))
 # =============================================================================
 indexes = range(0,50000,1000)
-predict_generator = DataGenerator(indexes, DATA_PATH, DATA_NAME, 
-                                  to_fit=False, batch_size=50, shuffle=False)
-
+# =============================================================================
+# predict_generator = DataGenerator(indexes, DATA_PATH, DATA_NAME, 
+#                                   to_fit=False, batch_size=50, shuffle=False)
+# 
+# =============================================================================
 # =============================================================================
 # with h5py.File(DATA_PATH, "r") as f:
 #     vis_data = f[DATA_NAME][image_numbers,:,:,:]
@@ -39,21 +41,27 @@ with h5py.File(DATA_PATH, "r") as f:
 # with h5py.File(embed_path, 'r') as f:    
 #     embeddings = f["embeddings"][image_numbers]
 # =============================================================================
-    
-autoencoder = tf.keras.models.load_model(MODEL_NAME,
-                                         custom_objects={"kl_divergence_regularizer":kl_divergence_regularizer},
-                                         compile=True)
-
+# =============================================================================
+#     
+# autoencoder = tf.keras.models.load_model(MODEL_NAME,
+#                                          custom_objects={"kl_divergence_regularizer":kl_divergence_regularizer},
+#                                          compile=True)
+# 
+# =============================================================================
 # =============================================================================
 # autoencoder = tf.keras.models.load_model(MODEL_NAME, 
 #                                          custom_objects={'Combine':Combine}, 
 #                                          compile=True)
 # =============================================================================
-autoencoder.summary()
+# =============================================================================
+# autoencoder.summary()
+# =============================================================================
 # =============================================================================
 # layer_name = autoencoder.layers[22].name
 # =============================================================================
-layer_name = "dense_4"
+# =============================================================================
+# layer_name = "latent"
+# =============================================================================
 # =============================================================================
 # encoder = Model(inputs=autoencoder.input,
 #                                  outputs=autoencoder.get_layer(layer_name).output)
@@ -76,7 +84,9 @@ print("making predictions...")
 # =============================================================================
 # encode = encoded.reshape((1000, 2*2*64))
 # =============================================================================
-decoded = autoencoder.predict(predict_generator, workers=4, use_multiprocessing=False)
+# =============================================================================
+# decoded = autoencoder.predict(predict_generator, workers=4, use_multiprocessing=False)
+# =============================================================================
 # =============================================================================
 # tree_code = encoder.predict(tree_generator, workers=4, use_multiprocessing=False) 
 # tree_image = autoencoder.predict(tree_generator, workers=4, use_multiprocessing=False)
@@ -103,7 +113,9 @@ decoded = autoencoder.predict(predict_generator, workers=4, use_multiprocessing=
 # norm = (decoded - np.min(d1))/np.ptp(d1)
 # =============================================================================
 print("done predictions...")
-compare = np.hstack([vis_data, decoded])
+# =============================================================================
+# compare = np.hstack([vis_data, decoded])
+# =============================================================================
 # =============================================================================
 # np.save("cae_predictions_5x5", compare)
 # compare = np.load("cae_predictions_5x5.npy")
@@ -111,10 +123,13 @@ compare = np.hstack([vis_data, decoded])
 plt.axis("off")
 
 for index in range(50):
-    fig=plt.imshow(compare[index],interpolation='none')
+# =============================================================================
+#     fig=plt.imshow(compare[index],interpolation='none')
+# =============================================================================
+    fig=plt.imshow(vis_data[index],interpolation='none')
     fig.axes.get_xaxis().set_visible(False)
     fig.axes.get_yaxis().set_visible(False)
-    plt.savefig('predictions/'+PIC_NAME+"_"+str(index)+'.png',
+    plt.savefig('test_images/'+PIC_NAME+"_"+str(index)+'.png',
         bbox_inches='tight', pad_inches=0, format='png', dpi=300)
     print("image written")
 
