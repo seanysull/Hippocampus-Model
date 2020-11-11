@@ -5,28 +5,20 @@ Created on Mon Apr 27 20:55:44 2020
 @author: seano
 """
 import os
-# =============================================================================
-# import matplotlib
-# =============================================================================
-# =============================================================================
-# matplotlib.use('TkAgg',warn=False, force=True)
-# =============================================================================
-# =============================================================================
-# import matplotlib.pyplot as plt
-# from matplotlib.image import NonUniformImage
-# from matplotlib import cm
-# =============================================================================
+import matplotlib
+matplotlib.use('TkAgg',warn=False, force=True)
+import matplotlib.pyplot as plt
+from matplotlib.image import NonUniformImage
+from matplotlib import cm
 import numpy as np
 import h5py
 import tensorflow as tf
 from tensorflow.keras import Model
-# =============================================================================
-# import pandas as pd
-# from scipy.stats import binned_statistic_2d, binned_statistic, binned_statistic_dd
-# from sklearn.preprocessing import MinMaxScaler
-# from sklearn.preprocessing import minmax_scale
-# from scipy.ndimage import gaussian_filter, label, generate_binary_structure
-# =============================================================================
+import pandas as pd
+from scipy.stats import binned_statistic_2d, binned_statistic, binned_statistic_dd
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import minmax_scale
+from scipy.ndimage import gaussian_filter, label, generate_binary_structure
 # =============================================================================
 # from mpl_toolkits.axes_grid1 import make_axes_locatable
 # =============================================================================

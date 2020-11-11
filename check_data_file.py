@@ -13,16 +13,28 @@ import time
 # with h5py.File("data/simulation_data_2607_10000steps.h5_denoiseV1_medio.h5", 'r') as f:
 #     vec_data = f["embeddings"][:]
 # =============================================================================
-with h5py.File("data/simulation_data_2708_100000steps_stretched_Z.h5", 'r') as f:
-    ims = f["visual_obs"][range(0,100000,4000)]
+# =============================================================================
+# with h5py.File("data/simulation_data_2708_100000steps_stretched_Z.h5", 'r') as f:
+#     ims = f["visual_obs"][range(0,100000,4000)]
+# =============================================================================
 
 # =============================================================================
 # for index in range(0,50000,1000):
 # =============================================================================
-for index in range(0,25):    
-    fig=plt.imshow(ims[index],interpolation='none')
-    fig.axes.get_xaxis().set_visible(False)
-    fig.axes.get_yaxis().set_visible(False)
-    plt.savefig('test_images/'+str(index)+'_stretch_z.png',
-        bbox_inches='tight', pad_inches=0, format='png', dpi=300)
-    print("image written")
+# =============================================================================
+# for index in range(0,25):    
+#     fig=plt.imshow(ims[index],interpolation='none')
+#     fig.axes.get_xaxis().set_visible(False)
+#     fig.axes.get_yaxis().set_visible(False)
+#     plt.savefig('test_images/'+str(index)+'_stretch_z.png',
+#         bbox_inches='tight', pad_inches=0, format='png', dpi=300)
+#     print("image written")
+# 
+# =============================================================================
+# =============================================================================
+# with h5py.File("data/simulation_data_100000steps_stretched.h5",'r') as f:
+#     vec_data = np.array(f["vector_obs"])
+# 
+# with h5py.File("data/stretch_xy.h5", 'w') as f:
+#     f.create_dataset("xy_data",data=vec_data)      
+# =============================================================================

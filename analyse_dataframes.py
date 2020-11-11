@@ -17,7 +17,7 @@ from scipy.ndimage import gaussian_filter, label, generate_binary_structure
 # =============================================================================
 
 
-def inspect_rate_maps(apt=0.96):
+def create_dataframes(apt=0.96):
     active_pixels_threshold=apt
     num_bins = 25*50
     min_pf_size = 6
