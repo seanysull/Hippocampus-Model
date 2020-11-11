@@ -5,22 +5,28 @@ Created on Mon Apr 27 20:55:44 2020
 @author: seano
 """
 import os
-import matplotlib
+# =============================================================================
+# import matplotlib
+# =============================================================================
 # =============================================================================
 # matplotlib.use('TkAgg',warn=False, force=True)
 # =============================================================================
-import matplotlib.pyplot as plt
-from matplotlib.image import NonUniformImage
-from matplotlib import cm
+# =============================================================================
+# import matplotlib.pyplot as plt
+# from matplotlib.image import NonUniformImage
+# from matplotlib import cm
+# =============================================================================
 import numpy as np
 import h5py
 import tensorflow as tf
 from tensorflow.keras import Model
-import pandas as pd
-from scipy.stats import binned_statistic_2d, binned_statistic, binned_statistic_dd
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.preprocessing import minmax_scale
-from scipy.ndimage import gaussian_filter, label, generate_binary_structure
+# =============================================================================
+# import pandas as pd
+# from scipy.stats import binned_statistic_2d, binned_statistic, binned_statistic_dd
+# from sklearn.preprocessing import MinMaxScaler
+# from sklearn.preprocessing import minmax_scale
+# from scipy.ndimage import gaussian_filter, label, generate_binary_structure
+# =============================================================================
 # =============================================================================
 # from mpl_toolkits.axes_grid1 import make_axes_locatable
 # =============================================================================
@@ -44,7 +50,7 @@ from tensorflow.keras.models import load_model
 
 def occupancy_map(xy_path, num_bins=20):
     with h5py.File(xy_path, 'r') as f:
-        vec_data = f["vector_obs"][:]
+        vec_data = f["xy_data"][:]
 
     x_positions = vec_data[:,0]
     z_positions = vec_data[:,1]
@@ -71,50 +77,11 @@ def occupancy_map(xy_path, num_bins=20):
     fig.colorbar(im)
     fig.savefig('rate_maps/'+xy_path+'.png',format='png', dpi=300)    
     
-def plot_ratemaps_cae(xy_path, embed_path, 
-                      stat_type="mean", num_bins=100):
-    
-    with h5py.File(xy_path, 'r') as f:
-        vec_data = f["vector_obs"][:]
-        
-    with h5py.File(embed_path, 'r') as f:    
-        embeddings = f["embeddings"][:]
-    
-    x_positions = vec_data[:,0]
-    z_positions = vec_data[:,2]
-    
-    for cell in range(embeddings.shape[1]):
-# =============================================================================
-#         for cell in range(20):
-# =============================================================================
-        res = binned_statistic_2d(x_positions, z_positions, 
-                                  embeddings[:,cell], 
-                                  stat_type, bins=num_bins)
-        bin_statistic, x_edges, z_edges, binnumbers = res
-        bin_statistic = np.nan_to_num(bin_statistic)
-        fig = plt.figure(figsize=(10, 10))
-        ax = fig.add_subplot(111, title='lec_cell'+str(cell),
-                aspect='equal', xlim=x_edges[[0, -1]], ylim=z_edges[[0, -1]])
-        ax.grid(False)
-        im = NonUniformImage(ax, interpolation='nearest', cmap=cm.Greys)
-        
-        xcenters = (x_edges[:-1] + x_edges[1:]) / 2
-        ycenters = (z_edges[:-1] + z_edges[1:]) / 2
-        
-        im.set_data(xcenters, ycenters, bin_statistic)
-        ax.images.append(im)
-        fig.colorbar(im)
-        fig.savefig('rate_maps/lec/lec_cell_drop'+str(cell)+'.png',
-                    format='png', dpi=300)
-        plt.close(plt.gcf())
-    
-    print("images written")
-
 def plot_ratemaps_hae(xy_path, embed_path, hippo_path,
-                  stat_type="mean", num_bins=100, stretched = False):
+                  stat_type="mean", num_bins=50, stretched = False):
     
     with h5py.File(xy_path, 'r') as f:
-        vec_data = f["vector_obs"][:]
+        vec_data = f["xy_data"][:]
         
     with h5py.File(embed_path, 'r') as f:    
         embeddings = f["embeddings"][:]
@@ -204,7 +171,7 @@ def plot_ratemaps_orientation(xy_path, embed_path, hippo_path,
                   stat_type="mean", num_bins=4):
     
     with h5py.File(xy_path, 'r') as f:
-        orientations = f["vector_obs"][:,4]
+        orientations = f["xy_data"][:,4]
         
     with h5py.File(embed_path, 'r') as f:    
         embeddings = f["embeddings"][:]
@@ -214,7 +181,7 @@ def plot_ratemaps_orientation(xy_path, embed_path, hippo_path,
                                              custom_objects={"kl_divergence_regularizer":kl_divergence_regularizer}, 
                                              compile=True)
     
-    layer_names = ["EC_in","DG","CA3","CA1","EC_out"]
+    layer_names = ["DG","CA3","CA1","EC_out"]
     
     layer_outputs = [hippocampus.get_layer(layer_name).output for 
                      layer_name in layer_names]
@@ -222,9 +189,9 @@ def plot_ratemaps_orientation(xy_path, embed_path, hippo_path,
     intermediate_layer_model = Model(inputs=hippocampus.input,
                                      outputs=layer_outputs)
     
-    EC_in, DG, CA3, CA1, EC_out = intermediate_layer_model.predict(embeddings)
+    DG, CA3, CA1, EC_out = intermediate_layer_model.predict(embeddings)
     
-    name_activations = zip(layer_names, (EC_in, DG, CA3, CA1, EC_out))
+    name_activations = zip(layer_names, (DG, CA3, CA1, EC_out))
         
     for name, activation in name_activations:
         for cell in range(activation.shape[1]):
@@ -268,7 +235,7 @@ def conjunctive_place_orient(xy_path, embed_path, hippo_path,
                   stat_type="mean", num_bins=100):
 
     with h5py.File(xy_path, 'r') as f:
-        orientations = f["vector_obs"][:,[0,1,4]]
+        orientations = f["xy_data"][:,[0,1,4]]
         
     with h5py.File(embed_path, 'r') as f:    
         embeddings = f["embeddings"][:]
@@ -346,28 +313,26 @@ def conjunctive_place_orient(xy_path, embed_path, hippo_path,
 
 
 def create_pcell_ratemaps(hippo_path,stat_type="mean", num_bins=[50,50]):
+    list_filenames = [("data/basic_xy.h5",
+                       "data/basi_embeddings.h5"),
+                      ("data/mod25_xy.h5",
+                       "data/mod25_embeddings.h5"),
+                      ("data/mod50_xy.h5",
+                       "data/mod50_embeddings.h5"),
+                      ("data/mod75_xy.h5",
+                       "data/mod75_embeddings.h5"),
+                      ("data/mod100_xy.h5",
+                       "data/mod100_embeddings.h5")]
 # =============================================================================
-#     list_filenames = [("data/simulation_data_2807_50000steps.h5",
-#                        "data/simulation_data_2807_50000steps.h5_denoiseV4_embeddings.h5"),
-#                       ("data/simulation_data_1608_100000steps_stretched_X.h5",
-#                        "data/simulation_data_1608_100000steps_stretched_X.h5_denoiseV4_embeddings.h5"),
-#                       ("data/simulation_data_2708_50000steps_morphed25.h5",
-#                        "data/simulation_data_2708_50000steps.h5_denoiseV4_morph25_embeddings.h5"),
-#                       ("data/simulation_data_2708_50000steps_morphed50.h5",
-#                        "data/simulation_data_2708_50000steps.h5_denoiseV4_morphed50_embeddings.h5"),
-#                       ("data/simulation_data_3108_50000steps_morphed75.h5",
-#                        "data/simulation_data_3108_50000steps.h5_denoiseV4_morphed75_embeddings.h5"),
-#                       ("data/simulation_data_3108_50000steps_morphed100.h5",
-#                        "data/simulation_data_3108_50000steps.h5_denoiseV4_morphed100_embeddings.h5")]
+#     list_filenames = [("data/simulation_data_1608_100000steps_stretched_X.h5",
+#                        "data/simulation_data_1608_100000steps_stretched_X.h5_denoiseV4_embeddings.h5")]
 # =============================================================================
-    list_filenames = [("data/simulation_data_1608_100000steps_stretched_X.h5",
-                       "data/simulation_data_1608_100000steps_stretched_X.h5_denoiseV4_embeddings.h5")]
 # =============================================================================
 #     for data_path, embed_path in list_filenames:
 # =============================================================================
     for data_path, embed_path in list_filenames[:]:
         with h5py.File(data_path, 'r') as f:
-            vec_data = f["vector_obs"][:]
+            vec_data = f["xy_data"][:]
             
         with h5py.File(embed_path, 'r') as f:    
             embeddings = f["embeddings"][:]
@@ -423,7 +388,7 @@ def circular_ratemaps(xy_path,
                         num_bins=[25,25]):
     
     with h5py.File(xy_path, 'r') as f:
-        orientations = f["vector_obs"][:,4].round(decimals=3)
+        orientations = f["xy_data"][:,4].round(decimals=3)
         
     with h5py.File(embed_path, 'r') as f:    
         embeddings = f["embeddings"][:]
@@ -499,19 +464,19 @@ def error_with_morphing():
         embeddings_100 = f["embeddings"][:]
 
     with h5py.File(base_path, 'r') as f:
-        xy_base = f["vector_obs"][:,[0,1]]
+        xy_base = f["xy_data"][:,[0,1]]
 
     with h5py.File(x25_path, 'r') as f:
-        xy_25 = f["vector_obs"][:,[0,1]]
+        xy_25 = f["xy_data"][:,[0,1]]
         
     with h5py.File(x50_path, 'r') as f:
-        xy_50 = f["vector_obs"][:,[0,1]]
+        xy_50 = f["xy_data"][:,[0,1]]
         
     with h5py.File(x75_path, 'r') as f:
-        xy_75 = f["vector_obs"][:,[0,1]]
+        xy_75 = f["xy_data"][:,[0,1]]
         
     with h5py.File(x100_path, 'r') as f:
-        xy_100 = f["vector_obs"][:,[0,1]]
+        xy_100 = f["xy_data"][:,[0,1]]
 
     pred_base = hippocampus.predict(embeddings_base)
     pred_25 = hippocampus.predict(embeddings_25 )
@@ -539,17 +504,15 @@ def error_with_morphing():
 
     
 if __name__ == "__main__":
-    xy_path = "data/simulation_data_2807_50000steps.h5"
-    embed_path = "data/simulation_data_2807_50000steps.h5_denoiseV4_embeddings.h5"
+    xy_path = "data/basic_xy.h5"
+    embed_path = "data/basic_embeddings.h5"
     hippo_path = "trained_models/denoiseV4.hdf5-07.hdf5_hippocampus_V11_sigmoid_reg.h5"
 
 # =============================================================================
 #     occupancy_map(xy_path)    
 # =============================================================================
-# =============================================================================
-#     plot_ratemaps_hae(xy_path, embed_path, hippo_path, 
-#                       stat_type="mean", num_bins=[25,50], stretched=True)
-# =============================================================================
+    plot_ratemaps_hae(xy_path, embed_path, hippo_path, 
+                      stat_type="mean", num_bins=[50,50], stretched=True)
 # =============================================================================
 #     plot_ratemaps_orientation(xy_path, embed_path, hippo_path, stat_type="mean", num_bins=2880)
 # =============================================================================
@@ -570,11 +533,13 @@ if __name__ == "__main__":
 # =============================================================================
 #     plot_count_size()
 # =============================================================================
-    circular_ratemaps(xy_path=xy_path,
-                        embed_path=embed_path,
-                        hippo_path=hippo_path,
-                        stat_type="mean", 
-                        num_bins=720)
+# =============================================================================
+#     circular_ratemaps(xy_path=xy_path,
+#                         embed_path=embed_path,
+#                         hippo_path=hippo_path,
+#                         stat_type="mean", 
+#                         num_bins=720)
+# =============================================================================
 # =============================================================================
 #     error_with_morphing()
 # =============================================================================

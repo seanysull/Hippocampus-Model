@@ -6,5 +6,5 @@ save_non_project_files = False
 
 [main]
 version = 0.2.0
-recent_files = ['plot_vector_data.py', 'analyse_dataframes.py', 'denoiser.py', 'generate_predictions.py', 't_sne.py', 'denoiser_modified.py', 'denoiser_batchact_reverse.py']
+recent_files = ['plot_vector_data.py', 'denoiser.py', 'run2.py', 'separate_h5data.py', '.gitignore']
 

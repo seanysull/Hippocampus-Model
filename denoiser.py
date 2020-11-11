@@ -31,16 +31,20 @@ from tensorflow.keras.utils import Sequence
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.callbacks import TensorBoard
-from sklearn.preprocessing import minmax_scale
+# =============================================================================
+# from sklearn.preprocessing import minmax_scale
+# =============================================================================
 import tensorflow as tf
 import numpy as np
 import h5py
 import time
 from datetime import datetime
 import pickle
-import matplotlib.pyplot as plt
-import matplotlib
-matplotlib.use("Agg")
+# =============================================================================
+# import matplotlib.pyplot as plt
+# import matplotlib
+# matplotlib.use("Agg")
+# =============================================================================
 
 
 def build_autoencoder(width=256, height=256, depth=3,filter_number=120, filter_size=3, latentDim=300):
@@ -424,13 +428,13 @@ class DataGenerator(Sequence):
         return X
 
 if __name__ == '__main__':
-    DATA_PATH = "data/simulation_data_1608_100000steps_stretched_X.h5"
-    MODEL_NAME = "trained_models/denoiseV4.hdf5-07.hdf5"
+    DATA_PATH = "data/simulation_data_100000steps_stretched.h5"
+    MODEL_NAME = "trained_models/denoiser.hdf5"
     DATA_NAME = "visual_obs"
-    EMBED_NAME = "data/simulation_data_2807_50000steps.h5_denoiseV4_embeddings.h5"
+    EMBED_NAME = "data/stretch_embeddings.h5"
     EPOCHS = 50
     BATCH = 50
-    NUM_SAMPLES = 50000
+    NUM_SAMPLES = 100000
 
 # =============================================================================
 #     inspect()
@@ -438,9 +442,7 @@ if __name__ == '__main__':
 # =============================================================================
 #     train_autoencoder(DATA_PATH,MODEL_NAME, DATA_NAME, EPOCHS, BATCH, NUM_SAMPLES)
 # =============================================================================
-# =============================================================================
-#     generate_embeddings(DATA_PATH, DATA_NAME,EMBED_NAME, MODEL_NAME, BATCH, NUM_SAMPLES)
-# =============================================================================
+    generate_embeddings(DATA_PATH, DATA_NAME,EMBED_NAME, MODEL_NAME, BATCH, NUM_SAMPLES)
 # =============================================================================
 #     train_hippocampus(DATA_PATH=EMBED_NAME, DATA_NAME = "embeddings", 
 #                       HMODEL_NAME = MODEL_NAME+"_hippocampus_V13.h5",
@@ -448,5 +450,7 @@ if __name__ == '__main__':
 #                       n_DG = 160, n_CA3 = 80, n_CA1 = 160, EPOCHS=1000 ,
 #                       activation="sigmoid", initialiser="glorot_normal" )
 # =============================================================================
-    relearn()
+# =============================================================================
+#     relearn()
+# =============================================================================
 

@@ -8,18 +8,20 @@ Created on Thu Jul 23 20:17:16 2020
 from mlagents_envs.environment import UnityEnvironment
 from numpy.random import choice
 import h5py
-import matplotlib.pyplot as plt
+# =============================================================================
+# import matplotlib.pyplot as plt
+# =============================================================================
 # =============================================================================
 # from mlagents_envs.side_channel.engine_configuration_channel import EngineConfig, EngineConfigurationChannel
 # =============================================================================
 
-NUM_SAMPLES = 50000
-H5FILE= "data/simulation_data_3108_50000steps_morphed100.h5"
+NUM_SAMPLES = 100000
+H5FILE= "data/simulation_data_100000steps_stretched.h5"
 with h5py.File(H5FILE, 'w') as f:
        vec_data = f.create_dataset('vector_obs', (NUM_SAMPLES, 5))
        vis_data = f.create_dataset('visual_obs', (NUM_SAMPLES, 256, 256, 3))
 print("File ready fi dem")
-env_name = "C:/Users/seano/Desktop/unity_builds/morphed_100"
+env_name = "C:\\Users\\seano\\Desktop\\unity_builds\\craic_stretched_x"
 # =============================================================================
 # engine_configuration_channel = EngineConfigurationChannel()
 # =============================================================================
@@ -34,89 +36,7 @@ To reset the environment, simply call `env.reset()`. This method takes no argume
 
 env.reset()
 print("Env reset successfull")
-# =============================================================================
-# """### Behavior Specs
-# 
-# #### Get the Behavior Specs from the Environment
-# """
-# 
-# # We will only consider the first Behavior
-# behavior_name = list(env.behavior_specs)[0] 
-# print(f"Name of the behavior : {behavior_name}")
-# spec = env.behavior_specs[behavior_name]
-# 
-# """#### Get the Observation Space from the Behavior Specs"""
-# 
-# # Examine the number of observations per Agent
-# print("Number of observations : ", len(spec.observation_shapes))
-# 
-# # Is there a visual observation ?
-# # Visual observation have 3 dimensions: Height, Width and number of channels
-# vis_obs = any(len(shape) == 3 for shape in spec.observation_shapes)
-# print("Is there a visual observation ?", vis_obs)
-# 
-# """#### Get the Action Space from the Behavior Specs"""
-# 
-# # Is the Action continuous or multi-discrete ?
-# if spec.is_action_continuous():
-#   print("The action is continuous")
-# if spec.is_action_discrete():
-#   print("The action is discrete")
-# 
-# # How many actions are possible ?
-# print(f"There are {spec.action_size} action(s)")
-# 
-# # For discrete actions only : How many different options does each action has ?
-# if spec.is_action_discrete():
-#   for action, branch_size in enumerate(spec.discrete_action_branches):
-#     print(f"Action number {action} has {branch_size} different options")
-# 
-# """### Steping the environment
-# 
-# #### Get the steps from the Environment
-# You can do this with the `env.get_steps(behavior_name)` method. If there are multiple behaviors in the Environment, you can call this method with each of the behavior's names.
-# _Note_ This will not move the simulation forward.
-# """
-# 
-# decision_steps, terminal_steps = env.get_steps(behavior_name)
-# 
-# """#### Set actions for each behavior
-# You can set the actions for the Agents of a Behavior by calling `env.set_actions()` you will need to specify the behavior name and pass a tensor of dimension 2. The first dimension of the action must be equal to the number of Agents that requested a decision during the step.
-# """
-# 
-# env.set_actions(behavior_name, spec.create_empty_action(len(decision_steps)))
-# 
-# """#### Move the simulation forward
-# Call `env.step()` to move the simulation forward. The simulation will progress until an Agent requestes a decision or terminates.
-# """
-# 
-# env.step()
-# =============================================================================
 
-"""### Observations
-
-#### Show the observations for one of the Agents
-`DecisionSteps.obs` is a tuple containing all of the observations for all of the Agents with the provided Behavior name.
-Each value in the tuple is an observation tensor containing the observation data for all of the agents.
-"""
-
-# =============================================================================
-# # Commented out IPython magic to ensure Python compatibility.
-# import matplotlib.pyplot as plt
-# # %matplotlib inline
-# 
-# for index, shape in enumerate(spec.observation_shapes):
-#   if len(shape) == 3:
-#     print("Here is the first visual observation")
-#     plt.imshow(decision_steps.obs[index][0,:,:,:])
-#     plt.show()
-# =============================================================================
-
-# =============================================================================
-# for index, shape in enumerate(spec.observation_shapes):
-#   if len(shape) == 1:
-#     print("First vector observations : ", decision_steps.obs[index][0,:])
-# =============================================================================
 
 """### Run the Environment for a few episodes"""
 behavior_name = list(env.behavior_specs)[0] 
@@ -124,7 +44,7 @@ print(f"Name of the behavior : {behavior_name}")
 spec = env.behavior_specs[behavior_name]
 
 count = 0       
-for episode in range(50):
+for episode in range(100):
   env.reset()
   decision_steps, terminal_steps = env.get_steps(behavior_name)
   tracked_agent = -1 # -1 indicates not yet tracking
