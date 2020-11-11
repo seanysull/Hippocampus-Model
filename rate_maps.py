@@ -6,7 +6,9 @@ Created on Mon Apr 27 20:55:44 2020
 """
 import os
 import matplotlib
-matplotlib.use('TkAgg',warn=False, force=True)
+# =============================================================================
+# matplotlib.use('TkAgg')
+# =============================================================================
 import matplotlib.pyplot as plt
 from matplotlib.image import NonUniformImage
 from matplotlib import cm
@@ -67,7 +69,7 @@ def occupancy_map(xy_path, num_bins=20):
 
     ax.images.append(im)
     fig.colorbar(im)
-    fig.savefig('rate_maps/'+xy_path+'.png',format='png', dpi=300)    
+    fig.savefig('rate_maps/occupancy/occ.png',format='png', dpi=300)    
     
 def plot_ratemaps_hae(xy_path, embed_path, hippo_path,
                   stat_type="mean", num_bins=50, stretched = False):
@@ -424,17 +426,17 @@ def circular_ratemaps(xy_path,
         np.save(ratemapname,ratemaps)
 
 def error_with_morphing():
-    MODEL_NAME = "trained_models/denoiseV4.hdf5-07.hdf5_hippocampus_V11_sigmoid_reg.h5"
-    base_path = "data/simulation_data_2807_50000steps.h5"
-    embed_base_path = "data/simulation_data_2807_50000steps.h5_denoiseV4_embeddings.h5"
-    x25_path = "data/simulation_data_2708_50000steps_morphed25.h5"
-    embed_25_path = "data/simulation_data_2708_50000steps.h5_denoiseV4_morph25_embeddings.h5"
-    x50_path = "data/simulation_data_2708_50000steps_morphed50.h5"
-    embed_50_path = "data/simulation_data_2708_50000steps.h5_denoiseV4_morphed50_embeddings.h5"
-    x75_path = "data/simulation_data_3108_50000steps_morphed75.h5"
-    embed_75_path = "data/simulation_data_3108_50000steps.h5_denoiseV4_morphed75_embeddings.h5"
-    x100_path = "data/simulation_data_3108_50000steps_morphed100.h5"
-    embed_100_path = "data/simulation_data_3108_50000steps.h5_denoiseV4_morphed100_embeddings.h5"
+    MODEL_NAME = "trained_models/denoiser_hippocampus.h5"
+    base_path = "data/basic_xy.h5"
+    embed_base_path = "data/basic_embeddings.h5"
+    x25_path = "data/mod25_xy.h5"
+    embed_25_path = "data/mod25_embeddings.h5"
+    x50_path = "data/mod50_xy.h5"
+    embed_50_path = "data/mod50_embeddings.h5"
+    x75_path = "data/mod75_xy.h5"
+    embed_75_path = "data/mod75_embeddings.h5"
+    x100_path = "data/mod100_xy.h5"
+    embed_100_path = "data/mod100_embeddings.h5"
     
     hippocampus = load_model(MODEL_NAME,
                              custom_objects={"kl_divergence_regularizer":kl_divergence_regularizer},
@@ -500,11 +502,11 @@ if __name__ == "__main__":
     embed_path = "data/basic_embeddings.h5"
     hippo_path = "trained_models/denoiseV4.hdf5-07.hdf5_hippocampus_V11_sigmoid_reg.h5"
 
+    occupancy_map(xy_path)    
 # =============================================================================
-#     occupancy_map(xy_path)    
+#     plot_ratemaps_hae(xy_path, embed_path, hippo_path, 
+#                       stat_type="mean", num_bins=[50,50], stretched=True)
 # =============================================================================
-    plot_ratemaps_hae(xy_path, embed_path, hippo_path, 
-                      stat_type="mean", num_bins=[50,50], stretched=True)
 # =============================================================================
 #     plot_ratemaps_orientation(xy_path, embed_path, hippo_path, stat_type="mean", num_bins=2880)
 # =============================================================================
