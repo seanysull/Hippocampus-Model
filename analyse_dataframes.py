@@ -475,24 +475,7 @@ def stretched_size_diff():
     g.set_axis_labels("Size of PF", "Fraction of Cells")
     plt.savefig("plots/pf_size_stretching_2.png")
 
-
-def error_with_morphing():
-    x = [0,1,2,3,4]
-    errors = [0.011727208300828934,
-              0.01231611738562584,
-              0.012665672952532769,
-              0.012772941752672195,              
-              0.013405257881879807]
-    fig, ax = plt.subplots(1)
-    ax.plot([0,25,50,75,100],errors)
-    ax.set_xticks([0,25,50,75,100])
-    ax.set_xlabel("Enviromental modification level (%)")
-    ax.set_title("MSE under environmental modification")
-# =============================================================================
-#     ax.plot(errors)
-# =============================================================================
-    plt.savefig("mse_morphing.png")
-      
+   
 
 
 def error_spatial_map_morphing():

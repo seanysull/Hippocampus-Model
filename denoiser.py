@@ -48,8 +48,6 @@ import pickle
 
 
 def build_autoencoder(width=256, height=256, depth=3,filter_number=120, filter_size=3, latentDim=300):
-    # initialize the input shape to be "channels last" along with
-    # the channels dimension itself
 
     inputShape = (height, width, depth)
     chanDim = -1

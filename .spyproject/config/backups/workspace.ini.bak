@@ -6,5 +6,5 @@ save_non_project_files = False
 
 [main]
 version = 0.2.0
-recent_files = ['rate_maps.py', 'denoiser.py', 'analyse_dataframes.py', 't_sne.py', 'requirements.txt', 'Readme.md', 'check_data_file.py']
+recent_files = ['denoiser.py', 'predictive_coding.py']
 
